@@ -20,9 +20,9 @@ export HISDK_LIBRARY=$dir/u5sdk/lib
 oscam_new(){
 #SVN_REVISION=$(date +"%Y-%m-%d")
 SVN_REVISION=$(date +"%m-%d-%Y-%H-%M-%S")
-[ ! -e $sources/oscam_new_test ] && svn co -r 1531 https://github.com/oscam-emu/oscam-patched/trunk oscam_new_test;
+[ ! -e $sources/oscam_new_test ] && svn co -r 1542 https://github.com/oscam-emu/oscam-patched/trunk oscam_new_test;
 cd $sources/oscam_new_test
-[ ! -e $sources/oscam_new_test/module-dvbapi-his.c ] && patch -p0 < $dir/patches/sky_dvbapi_test.patch;
+[ ! -e $sources/oscam_new_test/module-dvbapi-his.c ] && patch -p0 < $dir/patches/sky_new_test.patch;
 make clean
 make config
 make android-arm-hisky -j16 \
@@ -36,6 +36,13 @@ make android-arm-hisky -j16 \
 
 echo SVN_REVISION:$SVN_REVISION
 cp -af Distribution/oscam-1.20.sky.$SVN_REVISION $dir
+### diff ###
+# svn st
+# svn add cscrypt/aes_ctx.c cscrypt/aes_ctx.h cscrypt/des_ssl.c cscrypt/des_ssl.h csctapi/ifd_hisky.c csctapi/ifd_hisky.h module-constcw.h module-dvbapi-his.c module-dvbapi-his.h
+# svn diff > ../../sky_new_test_$(date +"%m-%d-%Y-%H-%M-%S").patch
+cp $dir/oscam-1.20.sky.$SVN_REVISION $dir/oscam
+zip -j $dir/oscam-armeabi-v7a.zip -xi $dir/oscam
+rm -rf $dir/oscam
 }
 ############
 oscam_old(){
@@ -95,14 +102,15 @@ fi
 #########
 menu(){
 selected=$(dialog --stdout --clear --colors --backtitle $0 --title "Hisilicon OSCam" --menu "" 6 40 10 \
-	new	"dvbapi_test" \
-	old	"10670");
+	new	"OSCam test" \
+	old	"OSCam 10670");
 case $selected in
-	new)oscam_new;; # patches/sky_dvbapi_test.patch
+	new)oscam_new;; # patches/sky_new_test.patch
 	old)oscam_old;; # patches/sky_old_10670.patch
 	esac
 #clear && exit;
 }
+#oscam_new
 menu
 #########
 exit;
