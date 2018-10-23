@@ -6647,7 +6647,7 @@ Index: module-dvbapi.c
  #include "module-stat.h"
  #include "oscam-chk.h"
  #include "oscam-client.h"
-@@ -261,12 +264,13 @@
+@@ -261,7 +264,7 @@
  struct s_dvbapi_priority *dvbapi_priority;
  struct s_client *dvbapi_client;
  
@@ -6656,12 +6656,14 @@ Index: module-dvbapi.c
  
  
  // when updating devices[BOX_COUNT] make sure to update these index defines
+@@ -268,6 +271,7 @@
  #define BOX_INDEX_QBOXHD 0
  #define BOX_INDEX_DREAMBOX_DVBAPI3 1
-+#define BOX_INDEX_HISILICON 5
  #define BOX_INDEX_COOLSTREAM 6
++#define BOX_INDEX_HISILICON 7
  
  static const struct box_devices devices[BOX_COUNT] =
+ {
 @@ -282,6 +286,7 @@
  	/* sh4      (stapi)*/       { "/dev/stapi/",            "stpti4_ioctl", "stpti4_ioctl", "/tmp/camd.socket", STAPI       },
  #endif
@@ -7665,7 +7667,15 @@ Index: module-dvbapi.c
  			dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM); //CAT
  		}
  		else { cs_ftime(&demux[demux_id].emmstart); } // for all other caids delayed start!
-@@ -4138,7 +4433,7 @@
+@@ -4083,6 +4378,7 @@
+ 	// this will allow oscam to run as root if needed
+ 	// and still allow non root client to connect to the socket
+ 	chmod(devices[selected_box].cam_socket_path, S_IRWXU | S_IRWXG | S_IRWXO);
++	cs_log_dbg(D_DVBAPI, "camsocket:%s\n", devices[selected_box].cam_socket_path);
+ 
+ 	return listenfd;
+ }
+@@ -4138,7 +4434,7 @@
  
  	SAFE_MUTEX_LOCK(&event_handler_lock);
  
@@ -7674,7 +7684,7 @@ Index: module-dvbapi.c
  		{ pausecam = 0; }
  	else
  	{
-@@ -4356,7 +4651,7 @@
+@@ -4356,7 +4652,7 @@
  void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, int32_t len, uint32_t msgid)
  {
  	struct s_ecmpids *curpid = NULL;
@@ -7683,7 +7693,7 @@ Index: module-dvbapi.c
  	uint16_t filtertype = demux[demux_id].demux_fd[filter_num].type;
  	uint32_t sctlen = SCT_LEN(buffer);
  
-@@ -4378,9 +4673,9 @@
+@@ -4378,9 +4674,9 @@
  		return;
  	}
  
@@ -7695,7 +7705,7 @@ Index: module-dvbapi.c
  	}
  
  	int32_t filt_match = filtermatch(buffer, filter_num, demux_id, sctlen); // acts on all filters (sdt/emm/ecm)
-@@ -4399,10 +4694,10 @@
+@@ -4399,10 +4695,10 @@
  		curpid->table = 0;
  		curpid->checked = 4; // flag ecmpid as checked
  		curpid->status = -1; // flag ecmpid as unusable
@@ -7708,7 +7718,7 @@ Index: module-dvbapi.c
  		}
  		dvbapi_stop_filternum(demux_id, filter_num, msgid); // stop this ecm filter!
  		return;
-@@ -4414,6 +4709,12 @@
+@@ -4414,6 +4710,12 @@
  		int8_t pvu_skip = 0;
  		ECM_REQUEST *er;
  
@@ -7721,7 +7731,7 @@ Index: module-dvbapi.c
  		if(len != 0)  // len = 0 receiver encountered an internal bufferoverflow!
  		{
  			cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched ECM data (ecmlength = 0x%03X):", demux_id, filter_num + 1, sctlen);
-@@ -4460,7 +4761,8 @@
+@@ -4460,7 +4762,8 @@
  				{
  					return;
  				}
@@ -7731,7 +7741,7 @@ Index: module-dvbapi.c
  				er->srvid = demux[demux_id].program_number;
  
  #ifdef WITH_STAPI5
-@@ -4478,6 +4780,11 @@
+@@ -4478,6 +4781,11 @@
  				er->vpid  = curpid->VPID;
  				er->ecmlen = sctlen;
  				memcpy(er->ecm, buffer, er->ecmlen);
@@ -7743,7 +7753,7 @@ Index: module-dvbapi.c
  				chid = get_subid(er); // fetch chid or fake chid
  				er->chid = chid;
  				er->msgid = msgid;
-@@ -4486,6 +4793,8 @@
+@@ -4486,6 +4794,8 @@
  				return;
  			}
  
@@ -7752,7 +7762,7 @@ Index: module-dvbapi.c
  			if(caid_is_irdeto(curpid->CAID))
  			{
  				// 80 70 39 53 04 05 00 88
-@@ -4504,6 +4813,8 @@
+@@ -4504,6 +4814,8 @@
  			return;
  		}
  
@@ -7761,7 +7771,7 @@ Index: module-dvbapi.c
  		er->srvid = demux[demux_id].program_number;
  
  #ifdef WITH_STAPI5
-@@ -4527,7 +4838,7 @@
+@@ -4527,7 +4839,7 @@
  		uint32_t fixedprovid = chk_provid(er->ecm, er->caid);
  		if(fixedprovid && fixedprovid != er->prid)
  		{
@@ -7770,7 +7780,7 @@ Index: module-dvbapi.c
  			curpid->PROVID = fixedprovid;
  			if(!USE_OPENXCAS)
  			{
-@@ -4587,7 +4898,7 @@
+@@ -4587,7 +4899,7 @@
  
  				if((curpid->irdeto_cycle < 0xFE) && (curpid->irdeto_cycle == curpid->irdeto_curindex))   // if same: we cycled all indexes but no luck!
  				{
@@ -7779,7 +7789,7 @@ Index: module-dvbapi.c
  					if(!forceentry || !forceentry->force)   // forced pid? keep trying the forced ecmpid, no force kill ecm filter
  					{
  						if(curpid->checked == 2) { curpid->checked = 4; }
-@@ -4613,7 +4924,7 @@
+@@ -4613,7 +4925,7 @@
  			}
  			else  // all nonirdeto cas systems
  			{
@@ -7788,7 +7798,7 @@ Index: module-dvbapi.c
  				curpid->table = 0;
  				dvbapi_set_section_filter(demux_id, er, filter_num); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
  				if(forceentry && forceentry->force)
-@@ -4674,7 +4985,7 @@
+@@ -4674,7 +4986,7 @@
  					|| (p->caid && p->caid != curpid->CAID)
  					|| (p->provid && p->provid != curpid->PROVID)
  					|| (p->ecmpid && p->ecmpid != curpid->ECM_PID)
@@ -7797,7 +7807,7 @@ Index: module-dvbapi.c
  					|| (p->srvid && p->srvid != demux[demux_id].program_number))
  				{ continue; }
  
-@@ -4854,6 +5165,7 @@
+@@ -4854,6 +5166,7 @@
  	{
  		case DVBAPI_FILTER_DATA: // min 9 bytes
  		{
@@ -7805,7 +7815,7 @@ Index: module-dvbapi.c
  			if(mbuf_len < 9)
  			{
  				return 9 - mbuf_len;
-@@ -4862,6 +5174,7 @@
+@@ -4862,6 +5175,7 @@
  		}
  		case DVBAPI_CLIENT_INFO: // min 7 bytes
  		{
@@ -7813,7 +7823,7 @@ Index: module-dvbapi.c
  			if(mbuf_len < 7)
  			{
  				return 7 - mbuf_len;
-@@ -5114,6 +5427,7 @@
+@@ -5114,6 +5428,7 @@
  	{
  		case DVBAPI_FILTER_DATA:
  		{
@@ -7821,7 +7831,7 @@ Index: module-dvbapi.c
  			if(data_len < 1)
  			{
  				cs_log("Error: packet DVBAPI_FILTER_DATA is too short!");
-@@ -5140,6 +5454,7 @@
+@@ -5140,6 +5455,7 @@
  		}
  		case DVBAPI_CLIENT_INFO:
  		{
@@ -7829,7 +7839,7 @@ Index: module-dvbapi.c
  			uint16_t client_proto = b2i(2, mbuf + 4);
  
  			NULLFREE(last_client_name);
-@@ -5259,11 +5574,15 @@
+@@ -5259,11 +5575,15 @@
  	SAFE_SETSPECIFIC(getclient, cli);
  
  	dvbapi_client = cli;
@@ -7846,7 +7856,7 @@ Index: module-dvbapi.c
  	struct sockaddr_un saddr;
  	saddr.sun_family = AF_UNIX;
  	strncpy(saddr.sun_path, PMT_SERVER_SOCKET, 107);
-@@ -5449,7 +5768,7 @@
+@@ -5449,7 +5769,7 @@
  			{
  				if(demux[i].demux_fd[g].fd <= 0) continue; // deny obvious invalid fd!
  
@@ -7855,7 +7865,7 @@ Index: module-dvbapi.c
  				{
  					pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
  					pfd2[pfdcount].events = (POLLIN | POLLPRI);
-@@ -5508,7 +5827,7 @@
+@@ -5508,7 +5828,7 @@
  				else
  				{
  					gone = comp_timeb(&now, &demux[i].emmstart);
@@ -7864,7 +7874,7 @@ Index: module-dvbapi.c
  					{
  						demux[i].emmstart = now;
  						dvbapi_start_emm_filter(i); // start emmfiltering delayed if filters already were running
-@@ -5521,7 +5840,10 @@
+@@ -5521,7 +5841,10 @@
  			{
  
  				int32_t started = 0;
@@ -7876,7 +7886,7 @@ Index: module-dvbapi.c
  				for(g = 0; g < demux[i].ECMpidcount; g++)  // avoid race: not all pids are asked and checked out yet!
  				{
  					if(demux[i].ECMpids[g].checked == 0 && demux[i].ECMpids[g].status >= 0)  // check if prio run is done
-@@ -5799,8 +6121,16 @@
+@@ -5799,8 +6122,16 @@
  							close(connfd);
  							connfd = -1;
  
@@ -7894,7 +7904,7 @@ Index: module-dvbapi.c
  								if (cfg.dvbapi_listenport)
  								{
  									//update webif data
-@@ -5878,7 +6208,7 @@
+@@ -5878,7 +6209,7 @@
  	return NULL;
  }
  
@@ -7903,7 +7913,7 @@ Index: module-dvbapi.c
  {
  	int32_t n;
  	int8_t cwEmpty = 0;
-@@ -5904,9 +6234,9 @@
+@@ -5904,9 +6235,9 @@
  
  		// check if already delivered and new cw part is valid but dont check for nullcw on Biss
  		if((memcmp(cw + (n * 8), demux[demux_id].lastcw[n], 8) != 0 || cwEmpty || stream_id >1)
@@ -7915,7 +7925,7 @@ Index: module-dvbapi.c
  			if (idx == INDEX_INVALID) return; // return on no index!
  
  #if defined WITH_COOLAPI || defined WITH_COOLAPI2
-@@ -5930,7 +6260,7 @@
+@@ -5930,7 +6261,7 @@
  				for(j = 0; j < demux[demux_id].STREAMpidcount; j++)
  				{
  					write_cw = 0;
@@ -7924,7 +7934,7 @@ Index: module-dvbapi.c
  					{
  						usedidx = is_ca_used(i, demux[demux_id].STREAMpids[j]);
  						if(usedidx != INDEX_INVALID)
-@@ -6605,38 +6935,39 @@
+@@ -6605,38 +6936,39 @@
  }
  
  
@@ -7977,7 +7987,7 @@ Index: module-dvbapi.c
  	if(selected_api != DVBAPI_3 && selected_api != DVBAPI_1 && selected_api != STAPI)   // only valid for dvbapi3, dvbapi1 and STAPI
  	{
  		return 0;
-@@ -6647,6 +6978,8 @@
+@@ -6647,6 +6979,8 @@
  		return 0;
  	}
  
@@ -7986,7 +7996,7 @@ Index: module-dvbapi.c
  	if(n == -1)
  	{
  		n = dvbapi_get_filternum(demux_index, er, TYPE_ECM);
-@@ -6663,10 +6996,10 @@
+@@ -6663,10 +6997,10 @@
  	memset(mask, 0, 16);
  
  	struct s_ecmpids *curpid = NULL;
@@ -8000,7 +8010,7 @@ Index: module-dvbapi.c
  	}
  	if(curpid->table != er->ecm[0] && curpid->table != 0) { return -1; }  // if current ecmtype differs from latest requested ecmtype do not apply section filtering!
  	uint8_t ecmfilter = 0;
-@@ -6690,7 +7023,7 @@
+@@ -6690,7 +7024,7 @@
  	}
  	uint32_t offset = 0, extramask = 0xFF;
  
@@ -8009,7 +8019,7 @@ Index: module-dvbapi.c
  	//cs_log("**** curpid->CHID %04X, checked = %d, er->chid = %04X *****", curpid->CHID, curpid->checked, er->chid);
  	// checked 4 to make sure we dont set chid filter and no such ecm in dvbstream except for forced pids!
  	if(curpid->CHID < 0x10000 && (curpid->checked == 4 || (forceentry && forceentry->force)))
-@@ -6840,7 +7173,10 @@
+@@ -6840,7 +7174,10 @@
  		break;
  	}
  	#endif
@@ -8021,7 +8031,7 @@ Index: module-dvbapi.c
  	default:
  		break;
  	}
-@@ -6876,11 +7212,11 @@
+@@ -6876,11 +7213,11 @@
  	if(memcmp(er->cw, nullcw, 8) == 0 && memcmp(er->cw+8, nullcw, 8) == 0 && er->caid !=0x2600) {return 5;}
  	struct s_ecmpids *curpid = NULL;
  
@@ -8036,7 +8046,7 @@ Index: module-dvbapi.c
  		if(curpid->table == 0) { return 3; }  // on change table act like ecm response is found
  	}
  
-@@ -6892,7 +7228,7 @@
+@@ -6892,7 +7229,7 @@
  
  int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type)
  {
@@ -8045,7 +8055,7 @@ Index: module-dvbapi.c
  
  	int32_t n;
  	int32_t fd = -1;
-@@ -7469,8 +7805,58 @@
+@@ -7469,8 +7806,58 @@
   *  protocol structure
   */
  
@@ -9541,32 +9551,7 @@ Index: oscam-string.c
 ===================================================================
 --- oscam-string.c	(revision 1542)
 +++ oscam-string.c	(working copy)
-@@ -284,6 +284,24 @@
- 	return 0;
- }
- 
-+// sky(n)
-+uint32_t b2be(int32_t n, const uchar *b)
-+{
-+	return (b2i(n,b));
-+}
-+
-+uint32_t b2le(int32_t n, const uchar *b)
-+	{
-+	switch (n) {
-+		case 1: return  (b[0]);
-+		case 2: return  (b[1] <<  8) |  b[0];
-+		case 3: return  (b[2] << 16) | (b[1] <<  8) |  b[0];
-+		case 4: return ((b[3] << 24) | (b[2] << 16) | (b[1] <<8 ) | b[0]) & 0xffffffffL;
-+		default: cs_log("Error in b2le, n=%i",n);
-+	}
-+	return 0;
-+}
-+
- uint64_t b2ll(int32_t n, uchar *b)
- {
- 	int32_t i;
-@@ -315,6 +333,21 @@
+@@ -315,6 +315,21 @@
  	return b;
  }
  
@@ -9588,7 +9573,7 @@ Index: oscam-string.c
  void ull2b_buf(uint64_t i, uchar *b)
  {
  	b[0] = (i >> 56) & 0xff;
-@@ -410,6 +443,71 @@
+@@ -410,6 +425,71 @@
  	}
  }
  
@@ -9660,7 +9645,7 @@ Index: oscam-string.c
  static uint32_t crc_table[256] =
  {
  	0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L,
-@@ -480,6 +578,8 @@
+@@ -480,6 +560,8 @@
  {
  	if(!buf)
  		{ return 0L; }
@@ -9673,17 +9658,7 @@ Index: oscam-string.h
 ===================================================================
 --- oscam-string.h	(revision 1542)
 +++ oscam-string.h	(working copy)
-@@ -24,6 +24,9 @@
- int32_t dyn_word_atob(char *asc);
- int32_t key_atob_l(char *asc, uchar *bin, int32_t l);
- uint32_t b2i(int32_t n, const uchar *b);
-+// sky(!)
-+uint32_t b2le(int32_t n, const uchar *b);
-+uint32_t b2be(int32_t n, const uchar *b);
- uint64_t b2ll(int32_t n, uchar *b);
- uchar *i2b_buf(int32_t n, uint32_t i, uchar *b);
- void ull2b_buf(uint64_t i, uchar *b);
-@@ -40,7 +43,9 @@
+@@ -40,7 +40,9 @@
  uint32_t fletcher_crc32(uint8_t *data, uint32_t len);
  uint16_t ccitt_crc(uint8_t *data, size_t length, uint16_t seed, uint16_t final);
  uint32_t jhash(const char *key, size_t len);
@@ -10398,24 +10373,7 @@ Index: reader-conax.c
 ===================================================================
 --- reader-conax.c	(revision 1542)
 +++ reader-conax.c	(working copy)
-@@ -192,6 +192,16 @@
- 		}
- 
- 	memset(reader->prid, 0x00, sizeof(reader->prid));
-+	// sky(oscam.smartcard)
-+	{
-+		uint32_t ulserial;
-+		ulserial = ((reader->hexserial[2] * 0x1000000)+
-+			  	 	    	 (reader->hexserial[3] * 0x10000)+
-+			  		  	    (reader->hexserial[4] * 0x100)+
-+			   		     reader->hexserial[5]);
-+		sprintf(reader->ascserial,"%03i.%04i.%04i", ulserial/100000000, (ulserial%100000000)/10000, ulserial%10000);
-+		reader->cardver = cardver;
-+	}
- 
- 	rdr_log_sensitive(reader, "type: Conax, caid: %04X, serial: {%llu}, hex serial: {%02x%02x%02x%02x}, card: v%d",
- 					  reader->caid, (unsigned long long) b2ll(6, reader->hexserial), reader->hexserial[2],
-@@ -501,7 +511,7 @@
+@@ -501,7 +501,7 @@
  								rdr_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate + 16, trim(provname));
  
  								// add entitlements to list
@@ -10424,7 +10382,7 @@ Index: reader-conax.c
  
  								k = 0;
  								chid[0] = '\0';
-@@ -520,7 +530,7 @@
+@@ -520,7 +520,7 @@
  					rdr_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate + 16, trim(provname));
  
  					// add entitlements to list
@@ -10437,127 +10395,7 @@ Index: reader-cryptoworks.c
 ===================================================================
 --- reader-cryptoworks.c	(revision 1542)
 +++ reader-cryptoworks.c	(working copy)
-@@ -8,6 +8,7 @@
- struct bignum_st;
- struct cryptoworks_data
- {
-+	uchar		algotype;
- 	BIGNUM          *exp;
- 	BIGNUM          *ucpk;
- 	int32_t         ucpk_valid;
-@@ -166,9 +167,9 @@
- 	return ((cta_res[0] == 0x9f) && (cta_res[1] == 0x11));
- }
- 
--static int32_t read_record(struct s_reader *reader, uchar rec, uchar *cta_res)
-+static int32_t read_record(struct s_reader *reader, uchar rec, uchar *cta_res, uint16_t *p_cta_lr)
- {
--	uint16_t cta_lr;
-+	uint16_t cta_lr = 0;
- 	uchar insA2[] = {0xA4, 0xA2, 0x00, 0x00, 0x01, 0x00};
- 	uchar insB2[] = {0xA4, 0xB2, 0x00, 0x00, 0x00};
- 
-@@ -180,6 +181,7 @@
- 	write_cmd(insB2, NULL);   // read record
- 	if((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1]))
- 		{ return (-1); }
-+	*p_cta_lr = cta_lr;
- 	return (cta_lr - 2);
- }
- 
-@@ -264,18 +266,45 @@
- 		insB8[2] = insB8[3] = 0xff; // next
- 	}
- 	for(i = reader->nprov; i < CS_MAXPROV; i++)
--		{ memset(&reader->prid[i][0], 0xff, 4); }
-+		memset(&reader->prid[i][0], 0xff, 4);
- 
- 	select_file(reader, 0x2f, 0x01, cta_res, &cta_lr);        // read caid
--	if(read_record(reader, 0xD1, cta_res) >= 4)
--		{ reader->caid = (cta_res[2] << 8) | cta_res[3]; }
-+	if (read_record(reader, 0xD1, cta_res, &cta_lr)>=4) {
-+		reader->caid = (cta_res[2]<<8)|cta_res[3];
-+	// sky(?)
-+	//	for (i=2;i<cta_lr;i+=2) {
-+	//		myrdr_log(reader, "card_cryptoworks_caid:%04X\n", (cta_res[i]<<8)|cta_res[i+1]);
-+	//	}
-+	}
-+	// sky(n)
-+	if (read_record(reader, 0xC3, cta_res, &cta_lr)>=4) {
-+		for (i=2;i<cta_lr-2;i++) {
-+			/* adds last 5 bytes together, if not FF */
-+			if (cta_res[i] != 0xff) csystem_data->algotype |= cta_res[i];
-+		}
-+		csystem_data->algotype |= 0x80;
-+	}
- 
--	if(read_record(reader, 0x80, cta_res) >= 7)       // read serial
--		{ memcpy(reader->hexserial, cta_res + 2, 5); }
-+	if (read_record(reader, 0x80, cta_res, &cta_lr)>=7) // read serial
-+		memcpy(reader->hexserial, cta_res+2, 5);
-+
-+//	myascdump("cryptowork hexserial", cta_res, cta_lr);
-+	// sky(oscam.smartcard)
-+	{
-+		uint64_t  ulserial;
-+		ulserial  = (uint64_t)b2i(4, reader->hexserial) * 256;
-+		ulserial += (uint64_t)reader->hexserial[4];
-+		sprintf(reader->ascserial, "%d.%d.%d.%d",
-+						(uint32_t)(ulserial / 100000000) / 10000,
-+						(uint32_t)(ulserial / 100000000) % 10000,
-+						(uint32_t)(ulserial / 10000) % 10000,
-+						(uint32_t)(ulserial % 10000));
-+	//	sprintf(reader->ascserial, "%llu", b2ll(5, reader->hexserial));
-+	}
- 	rdr_log_sensitive(reader, "type: CryptoWorks, caid: %04X, ascii serial: {%llu}, hex serial: {%s}",
- 					  reader->caid, (unsigned long long) b2ll(5, reader->hexserial), cs_hexdump(0, reader->hexserial, 5, tmp, sizeof(tmp)));
- 
--	if(read_record(reader, 0x9E, cta_res) >= 66)  // read ISK
-+	if(read_record(reader, 0x9E, cta_res, &cta_lr) >= 66)  // read ISK
- 	{
- 		uchar keybuf[256];
- 		BIGNUM *ipk;
-@@ -306,9 +335,9 @@
- 			}
- 		}
- 	}
--	if(read_record(reader, 0x9F, cta_res) >= 3)
-+	if(read_record(reader, 0x9F, cta_res, &cta_lr) >= 3)
- 		{ issuerid = cta_res[2]; }
--	if(read_record(reader, 0xC0, cta_res) >= 16)
-+	if(read_record(reader, 0xC0, cta_res, &cta_lr) >= 16)
- 	{
- 		cs_strncpy(issuer, (const char *)cta_res + 2, sizeof(issuer));
- 		trim(issuer);
-@@ -316,9 +345,17 @@
- 	else
- 		{ cs_strncpy(issuer, unknown, sizeof(issuer)); }
- 
-+	// sky(oscam.smartcard)
- 	select_file(reader, 0x3f, 0x20, cta_res, &cta_lr);
-+	select_file(reader, 0x2f, 0x03, cta_res, &cta_lr);	// read maturity
-+	if(read_record(reader, 0xC0, cta_res, &cta_lr)>=3)
-+	{
-+		reader->maturity = cta_res[2];
-+	}
-+
-+	select_file(reader, 0x3f, 0x20, cta_res, &cta_lr);
- 	select_file(reader, 0x2f, 0x11, cta_res, &cta_lr);        // read pin
--	if(read_record(reader, atr[8], cta_res) >= 7)
-+	if(read_record(reader, atr[8], cta_res, &cta_lr)>=7)
- 	{
- 		cta_res[6] = 0;
- 		pin = (char *)cta_res + 2;
-@@ -688,7 +725,7 @@
- 		l_name[8] = 0;
- 		select_file(reader, 0x1f, reader->prid[i][3], cta_res, &cta_lr);    // select provider
- 		select_file(reader, 0x0e, 0x11, cta_res, &cta_lr);      // read provider name
--		if(read_record(reader, 0xD6, cta_res) >= 16)
-+		if(read_record(reader, 0xD6, cta_res, &cta_lr) >= 16)
- 		{
- 			cs_strncpy(l_name + 8, (const char *)cta_res + 2, sizeof(l_name) - 9);
- 			l_name[sizeof(l_name) - 1] = 0;
-@@ -709,9 +746,9 @@
+@@ -709,9 +709,9 @@
  					char ds[16], de[16];
  
  					// todo: add entitlements to list but produces a warning related to date variable
@@ -10569,7 +10407,7 @@ Index: reader-cryptoworks.c
  
  					rdr_log(reader, "chid: %02X%02X, date: %s - %s, name: %s",
  							cta_res[6], cta_res[7], ds, de, trim((char *) cta_res + 10));
-@@ -734,7 +771,7 @@
+@@ -734,7 +734,7 @@
  					// todo: add entitlements to list but produces a warning related to date variable
  					cs_add_entitlement(reader, reader->caid, reader->prid[i][3], b2i(2, cta_res + 6), 0,
  									   chid_date(cta_res + 28, ds, sizeof(ds) - 1),
@@ -10578,19 +10416,6 @@ Index: reader-cryptoworks.c
  
  					cta_res[27] = 0;
  					rdr_log(reader, "chid: %02X%02X, date: %s - %s, name: %s",
-Index: reader-dgcrypt.c
-===================================================================
---- reader-dgcrypt.c	(revision 1542)
-+++ reader-dgcrypt.c	(working copy)
-@@ -115,6 +115,8 @@
- 	if(!dgcrypt_cmd(rdr, cmd_LABEL, sizeof(cmd_LABEL), cta_res, &cta_lr, 4))
- 		{ return ERROR; }
- 
-+	// sky(oscam.smartcard)
-+	sprintf(rdr->ascserial, "%"PRIu64"", b2ll(7, rdr->hexserial));
- 	rdr_log_sensitive(rdr, "CAID: 0x%04X, Serial: {%"PRIu64"} HexSerial: {%02X %02X %02X %02X %02X %02X %02X} Label: {%s}",
- 					  rdr->caid,
- 					  b2ll(7, rdr->hexserial),
 Index: reader-dre-cas.c
 ===================================================================
 --- reader-dre-cas.c	(revision 1542)
@@ -10617,36 +10442,11 @@ Index: reader-dre.c
  			}
  	}
  	
-Index: reader-griffin.c
-===================================================================
---- reader-griffin.c	(revision 1542)
-+++ reader-griffin.c	(working copy)
-@@ -270,6 +270,9 @@
- 	griffin_cmd(GRIFFIN_CMD_GET_ASCII_SERIAL, NULL, 0, 14);
- 	memcpy(serial, cta_res + 2, 12);
- 
-+	// sky(oscam.smartcard)
-+	strcpy(rdr->ascserial, serial);
-+
- 	griffin_cmd(GRIFFIN_CMD_GET_CAID, NULL, 0, 4);
- 	rdr->caid = (cta_res[2] << 8) | cta_res[3];
- 
 Index: reader-irdeto.c
 ===================================================================
 --- reader-irdeto.c	(revision 1542)
 +++ reader-irdeto.c	(working copy)
-@@ -448,6 +448,10 @@
- 	}
- 	memcpy(buf, cta_res + acspadd, 10);
- 	buf[10] = 0;
-+	// sky(oscam.smartcard)
-+	reader->acs = csystem_data->acs;
-+	memcpy(reader->country_code, csystem_data->country_code, 3);
-+	strcpy(reader->ascserial, (char *)buf);
- 	if(csystem_data->acs57 == 1)
- 	{
- 		irdeto_do_cmd(reader, sc_Acs57Hex, 0x903E, cta_res, &cta_lr);
-@@ -1273,7 +1277,7 @@
+@@ -1273,7 +1273,7 @@
  							end_t = chid_date(reader, date + cta_res[k + 4], t + 16, 16);
  
  							// todo: add entitlements to list but produces a warning related to date variable
@@ -10667,22 +10467,7 @@ Index: reader-nagra.c
  							   1);
  
  
-@@ -902,6 +903,14 @@
- 	{
- 		rdr_log(reader, "Prv.ID: %s", cs_hexdump(1, reader->prid[i], 4, tmp, sizeof(tmp)));
- 	}
-+// sky(oscam.smartcard)
-+	uint32_t ulserial;
-+	ulserial = b2i(4,reader->hexserial+2);
-+	sprintf(reader->ascserial, "%02d.%04d.%04d.??",
-+			  ulserial / 100000000,
-+			 (ulserial / 10000) % 10000,
-+			 (ulserial % 10000));
-+
- 	cs_clear_entitlement(reader); //reset the entitlements
- 	if(csystem_data->is_tiger)
- 	{
-@@ -1001,7 +1010,7 @@
+@@ -1001,7 +1002,7 @@
  							rdr_log(reader, "Activation     : ( %04X ) from %s to %s  (%3d euro) %s",
  									records[i].value, records[i].date1, records[i].date2, euro, get_tiername(records[i].value, reader->caid, tiername));
  						}
@@ -10691,7 +10476,7 @@ Index: reader-nagra.c
  					}
  					break;
  
-@@ -1014,7 +1023,7 @@
+@@ -1014,7 +1015,7 @@
  							rdr_log(reader, "Tier : %04X, expiry date: %s %s",
  									records[i].value, records[i].date2, get_tiername(records[i].value, reader->caid, tiername));
  						}
@@ -10713,41 +10498,6 @@ Index: reader-seca.c
  
  	return OK;
  }
-@@ -240,6 +240,20 @@
- 	write_cmd(ins0e, NULL); // read unique id
- 	memcpy(reader->hexserial, cta_res + 2, 6);
- 	serial = b2ll(5, cta_res + 3) ;
-+	// sky(oscam.smartcard)
-+	{
-+		uint16_t sn_h;
-+		uint32_t sn_l;
-+		sn_h = b2i(2, reader->hexserial);
-+		sn_l = b2i(4, reader->hexserial+2);
-+
-+		sprintf(reader->ascserial, "%02d.%03d.%03d.%03d",
-+			 (sn_h % 100),
-+			 (sn_l / 1000000),
-+			 (sn_l / 1000) % 1000,
-+			 (sn_l % 1000));
-+	}
-+
- 	rdr_log_sensitive(reader, "type: SECA, caid: %04X, serial: {%llu}, card: %s v%d.%d",
- 					  reader->caid, (unsigned long long) serial, card, atr[9] & 0x0F, atr[9] >> 4);
- 	
-Index: reader-tongfang.c
-===================================================================
---- reader-tongfang.c	(revision 1542)
-+++ reader-tongfang.c	(working copy)
-@@ -77,6 +77,9 @@
- 	memcpy(pairing_cmd + 5, boxID, sizeof(boxID));
- 	write_cmd(pairing_cmd, pairing_cmd + 5);
- 
-+	// sky(oscam.smartcard)
-+	sprintf(reader->ascserial, "%llu", b2ll(6, reader->hexserial));
-+
- 	rdr_log_sensitive(reader, "type: Tongfang, caid: %04X, serial: {%llu}, hex serial: {%02x%02x%02x%02x}, BoxID: {%02X%02X%02X%02X}",
- 					  reader->caid, (unsigned long long) b2ll(6, reader->hexserial), reader->hexserial[2],
- 					  reader->hexserial[3], reader->hexserial[4], reader->hexserial[5],
 Index: reader-viaccess.c
 ===================================================================
 --- reader-viaccess.c	(revision 1542)
@@ -10779,24 +10529,7 @@ Index: reader-viaccess.c
  					{
  						if(!add)
  						{
-@@ -940,6 +940,16 @@
- 	insb8[4] = 0x07;
- 	write_cmd(insb8, NULL); // read unique id
- 	memcpy(reader->hexserial, cta_res + 2, 5);
-+
-+	// sky(oscam.smartcard)
-+   	{
-+	  	uint32_t userial;
-+	    if (reader->hexserial[0]==0) userial = b2i(4, &(reader->hexserial[1]));
-+		else
-+	    if (reader->hexserial[4]==0) userial = b2le(4, &(reader->hexserial[1]));
-+		else                          userial = b2i(4, &(reader->hexserial[0]));
-+		sprintf(reader->ascserial, "%i%i", userial/10000, userial%10000);
-+ 	}
- 	//  rdr_log(reader, "[viaccess-reader] type: Viaccess, ver: %s serial: %llu", ver, b2ll(5, cta_res+2));
- 	rdr_log_sensitive(reader, "type: Viaccess (%sstandard atr), caid: %04X, serial: {%llu}",
- 					  atr[9] == 0x68 ? "" : "non-", reader->caid, (unsigned long long) b2ll(5, cta_res + 2));
-@@ -2009,7 +2019,7 @@
+@@ -2009,7 +2009,7 @@
  		if(!added)
  		{
  			// add entitlement info for provid without class
@@ -10818,21 +10551,6 @@ Index: reader-videoguard1.c
  		rdr_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, get_tiername(tier_id, reader->caid, tiername));
  	}
  }
-@@ -285,6 +285,14 @@
- 	reader->nprov = 1;
- 	memset(reader->prid, 0x00, sizeof(reader->prid));
- 
-+  // sky(oscam.smartcard)
-+  {
-+    uint32_t ulsno = b2i(4,reader->hexserial+2);
-+    sprintf(reader->ascserial, "%04d.%04d.%03d?",
-+		  		  ulsno / 10000000,
-+		  		 (ulsno / 1000) % 10000,
-+		  		 (ulsno % 1000));
-+  }
- 	rdr_log_sensitive(reader, "type: VideoGuard, caid: %04X, serial: {%02X%02X%02X%02X}, BoxID: {%02X%02X%02X%02X}",
- 					  reader->caid, reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5],
- 					  boxID[0], boxID[1], boxID[2], boxID[3]);
 Index: reader-videoguard12.c
 ===================================================================
 --- reader-videoguard12.c	(revision 1542)
@@ -10846,22 +10564,6 @@ Index: reader-videoguard12.c
  		char tiername[83];
  		rdr_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, get_tiername(tier_id, reader->caid, tiername));
  	}
-@@ -335,6 +335,15 @@
- 		//return ERROR;
- 	}
- 
-+  // sky(oscam.smartcard)
-+  {
-+    uint32_t ulsno = b2i(4,reader->hexserial+2);
-+    sprintf(reader->ascserial, "%04d.%04d.%03d?",
-+		  		  ulsno / 10000000,
-+		  		 (ulsno / 1000) % 10000,
-+		  		 (ulsno % 1000));
-+  }
-+
- 	rdr_log_sensitive(reader,
- 					  "type: VideoGuard, caid: %04X, serial: {%02X%02X%02X%02X}, BoxID: {%02X%02X%02X%02X}",
- 					  reader->caid, reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], boxID[0], boxID[1], boxID[2], boxID[3]);
 Index: reader-videoguard2.c
 ===================================================================
 --- reader-videoguard2.c	(revision 1542)
@@ -10893,22 +10595,6 @@ Index: reader-videoguard2.c
  
  				if(!stopemptytier)
  				{
-@@ -1062,6 +1062,15 @@
- 		{ dimeno_magic[a] = dimeno_magic[a] ^ boxID[a]; }
- 	AES_set_decrypt_key(dimeno_magic, 128, &(csystem_data->astrokey));
- 
-+  	// sky(oscam.smartcard)
-+  	{
-+    	uint32_t ulsno = b2i(4,reader->hexserial+2);
-+    	sprintf(reader->ascserial, "%04d.%04d.%03d?",
-+		  		  ulsno / 10000000,
-+		  		 (ulsno / 1000) % 10000,
-+		  		 (ulsno % 1000));
-+  	}
-+
- 	rdr_log(reader, "type: %s, caid: %04X",
- 			csystem_data->card_desc,
- 			reader->caid);
 Index: webif/files/menu.html
 ===================================================================
 --- webif/files/menu.html	(revision 1542)
