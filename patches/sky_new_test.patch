@@ -1,6 +1,6 @@
 Index: Makefile
 ===================================================================
---- Makefile	(revision 1542)
+--- Makefile	(revision 1560)
 +++ Makefile	(working copy)
 @@ -35,8 +35,14 @@
  	override USE_LIBCRYPTO=1
@@ -85,7 +85,7 @@ Index: Makefile
  SRC-$(CONFIG_CARDREADER_INTERNAL_AZBOX) += csctapi/ifd_azbox.c
  SRC-$(CONFIG_CARDREADER_INTERNAL_COOLAPI) += csctapi/ifd_cool.c
  SRC-$(CONFIG_CARDREADER_INTERNAL_COOLAPI2) += csctapi/ifd_cool.c
-@@ -301,6 +321,7 @@
+@@ -310,6 +330,7 @@
  SRC-$(CONFIG_WITH_SU980) += module-dvbapi-coolapi.c
  SRC-$(CONFIG_WITH_STAPI) += module-dvbapi-stapi.c
  SRC-$(CONFIG_WITH_STAPI5) += module-dvbapi-stapi5.c
@@ -93,7 +93,7 @@ Index: Makefile
  SRC-$(CONFIG_HAVE_DVBAPI) += module-dvbapi-chancache.c
  SRC-$(CONFIG_HAVE_DVBAPI) += module-dvbapi.c
  SRC-$(CONFIG_MODULE_GBOX) += module-gbox-helper.c
-@@ -446,13 +467,15 @@
+@@ -455,13 +476,15 @@
  
  -include $(subst .o,.d,$(OBJ))
  
@@ -116,7 +116,7 @@ Index: Makefile
  
  config:
  	$(SHELL) ./config.sh --gui
-@@ -472,7 +495,7 @@
+@@ -481,7 +504,7 @@
  	@-$(SHELL) ./config.sh --restore
  
  clean:
@@ -125,7 +125,7 @@ Index: Makefile
  		echo "RM	$$FILE"; \
  		rm -rf $$FILE; \
  	done
-@@ -649,6 +672,14 @@
+@@ -658,6 +681,14 @@
                       In order for USE_SU980 to work you have to have libentropic.a\n\
                       library in your cross compilation toolchain.\n\
  \n\
@@ -140,7 +140,7 @@ Index: Makefile
     USE_AZBOX=1    - Request support for AZBOX (openxcas)\n\
                      box. The variables that control the build are:\n\
                           AZBOX_FLAGS='$(DEFAULT_AZBOX_FLAGS)'\n\
-@@ -772,7 +803,7 @@
+@@ -781,7 +812,7 @@
      make static-ssl    - Builds OSCam with SSL support linked statically\n\
  \n\
   Developer targets:\n\
@@ -149,7 +149,7 @@ Index: Makefile
  \n\
   Examples:\n\
     Build OSCam for SH4 (the compilers are in the path):\n\
-@@ -789,6 +820,8 @@
+@@ -798,6 +829,8 @@
       make CROSS=arm-cx2450x-linux-gnueabi- USE_COOLAPI=1\n\n\
     Build OSCam for ARM with COOLAPI2 (coolstream aka NeutrinoHD):\n\
       make CROSS=arm-pnx8400-linux-uclibcgnueabi- USE_COOLAPI2=1\n\n\
@@ -160,7 +160,7 @@ Index: Makefile
     Build OSCam for ARM with MCA support:\n\
 Index: Makefile.extra
 ===================================================================
---- Makefile.extra	(revision 1542)
+--- Makefile.extra	(revision 1560)
 +++ Makefile.extra	(working copy)
 @@ -294,6 +294,14 @@
  		CROSS=arm-linux-androideabi- \
@@ -179,7 +179,7 @@ Index: Makefile.extra
  		LIB_DL= STRIP=true \
 Index: config.h
 ===================================================================
---- config.h	(revision 1542)
+--- config.h	(revision 1560)
 +++ config.h	(working copy)
 @@ -12,7 +12,7 @@
  #endif
@@ -242,7 +242,7 @@ Index: config.h
  #ifdef READER_DRE
 Index: config.sh
 ===================================================================
---- config.sh	(revision 1542)
+--- config.sh	(revision 1560)
 +++ config.sh	(working copy)
 @@ -311,6 +311,7 @@
  	have_flag USE_COOLAPI && echo "CONFIG_WITH_COOLAPI=y" || echo "# CONFIG_WITH_COOLAPI=n"
@@ -2745,7 +2745,7 @@ Index: cscrypt/des_ssl.h
 +
 Index: csctapi/atr.c
 ===================================================================
---- csctapi/atr.c	(revision 1542)
+--- csctapi/atr.c	(revision 1560)
 +++ csctapi/atr.c	(working copy)
 @@ -36,7 +36,7 @@
   * Exported variables definition
@@ -2758,7 +2758,7 @@ Index: csctapi/atr.c
  //const double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 32, 64, 12, 20, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};
 Index: csctapi/cardreaders.h
 ===================================================================
---- csctapi/cardreaders.h	(revision 1542)
+--- csctapi/cardreaders.h	(revision 1560)
 +++ csctapi/cardreaders.h	(working copy)
 @@ -2,6 +2,7 @@
  #define CSCTAPI_CARDREADERS_H_
@@ -2770,7 +2770,7 @@ Index: csctapi/cardreaders.h
  extern const struct s_cardreader cardreader_internal_azbox;
 Index: csctapi/icc_async.c
 ===================================================================
---- csctapi/icc_async.c	(revision 1542)
+--- csctapi/icc_async.c	(revision 1560)
 +++ csctapi/icc_async.c	(working copy)
 @@ -765,6 +765,11 @@
  				FI = req[2] >> 4;
@@ -4462,7 +4462,7 @@ Index: csctapi/ifd_hisky.h
 +
 Index: csctapi/protocol_t0.c
 ===================================================================
---- csctapi/protocol_t0.c	(revision 1542)
+--- csctapi/protocol_t0.c	(revision 1560)
 +++ csctapi/protocol_t0.c	(working copy)
 @@ -550,6 +550,9 @@
  	memcpy(buffer + 8 + recved, buffer + 2, 2);
@@ -4476,7 +4476,7 @@ Index: csctapi/protocol_t0.c
  #endif
 Index: devtools/check_config_tables.sh
 ===================================================================
---- devtools/check_config_tables.sh	(revision 1542)
+--- devtools/check_config_tables.sh	(revision 1560)
 +++ devtools/check_config_tables.sh	(working copy)
 @@ -49,3 +49,9 @@
  do
@@ -4490,7 +4490,7 @@ Index: devtools/check_config_tables.sh
 +done
 Index: globals.h
 ===================================================================
---- globals.h	(revision 1542)
+--- globals.h	(revision 1560)
 +++ globals.h	(working copy)
 @@ -112,6 +112,13 @@
  typedef unsigned char uchar;
@@ -4930,7 +4930,7 @@ Index: globals.h
  bool boxtype_is(const char *boxtype);
 Index: module-anticasc.c
 ===================================================================
---- module-anticasc.c	(revision 1542)
+--- module-anticasc.c	(revision 1560)
 +++ module-anticasc.c	(working copy)
 @@ -82,7 +82,8 @@
  	for(client = first_client; client; client = client->next)
@@ -4944,7 +4944,7 @@ Index: module-anticasc.c
  
 Index: module-constcw.c
 ===================================================================
---- module-constcw.c	(revision 1542)
+--- module-constcw.c	(revision 1560)
 +++ module-constcw.c	(working copy)
 @@ -3,13 +3,128 @@
  //FIXME Not checked on threadsafety yet; after checking please remove this line
@@ -5344,7 +5344,7 @@ Index: module-constcw.h
 +
 Index: module-dvbapi-chancache.c
 ===================================================================
---- module-dvbapi-chancache.c	(revision 1542)
+--- module-dvbapi-chancache.c	(revision 1560)
 +++ module-dvbapi-chancache.c	(working copy)
 @@ -16,6 +16,9 @@
  
@@ -6635,7 +6635,7 @@ Index: module-dvbapi-his.h
 +#endif
 Index: module-dvbapi.c
 ===================================================================
---- module-dvbapi.c	(revision 1542)
+--- module-dvbapi.c	(revision 1560)
 +++ module-dvbapi.c	(working copy)
 @@ -11,6 +11,9 @@
  #include "module-dvbapi-coolapi.h"
@@ -8116,7 +8116,7 @@ Index: module-dvbapi.c
  	ph->listenertype = LIS_DVBAPI;
 Index: module-dvbapi.h
 ===================================================================
---- module-dvbapi.h	(revision 1542)
+--- module-dvbapi.h	(revision 1560)
 +++ module-dvbapi.h	(working copy)
 @@ -9,12 +9,13 @@
  #define TYPE_SDT 3
@@ -8252,9 +8252,21 @@ Index: module-dvbapi.h
  bool is_dvbapi_usr(char *usr);
  static inline bool module_dvbapi_enabled(void) { return cfg.dvbapi_enabled; }
  #else
+Index: module-emulator-powervu.c
+===================================================================
+--- module-emulator-powervu.c	(revision 1560)
++++ module-emulator-powervu.c	(working copy)
+@@ -13,6 +13,7 @@
+ #include "oscam-time.h"
+ 
+ #if defined(__ANDROID__)
++#include <byteswap.h>
+ #define __bswap_32 bswap_32
+ #endif
+ 
 Index: module-webif-tpl.c
 ===================================================================
---- module-webif-tpl.c	(revision 1542)
+--- module-webif-tpl.c	(revision 1560)
 +++ module-webif-tpl.c	(working copy)
 @@ -401,6 +401,7 @@
  											check_conf(WITH_CARDREADER, ptr2);
@@ -8266,9 +8278,9 @@ Index: module-webif-tpl.c
  											check_conf(CARDREADER_INTERNAL_SCI, ptr2);
 Index: module-webif.c
 ===================================================================
---- module-webif.c	(revision 1542)
+--- module-webif.c	(revision 1560)
 +++ module-webif.c	(working copy)
-@@ -61,6 +61,11 @@
+@@ -63,6 +63,11 @@
  static int8_t httpthread_running = 0;
  static pthread_t httpthread;
  static int32_t sock;
@@ -8280,7 +8292,7 @@ Index: module-webif.c
  enum refreshtypes { REFR_ACCOUNTS, REFR_READERS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
  
  //initialize structs for calculating cpu-usage depending on time between refresh of status_page
-@@ -81,7 +86,9 @@
+@@ -83,7 +88,9 @@
  #define MNU_CACHEEX		8
  #define MNU_SCRIPT		9
  #define MNU_SHUTDOWN		10
@@ -8291,7 +8303,7 @@ Index: module-webif.c
  
  /* constants for config.html submenuactivating */
  #define MNU_CFG_GLOBAL 		0
-@@ -136,9 +143,16 @@
+@@ -138,9 +145,16 @@
  #define MNU_GBX_FEXPINF     	28
  #define MNU_GBX_INFOLOG     	29
  #define MNU_CFG_FSOFTCAMKEY	30
@@ -8309,7 +8321,7 @@ Index: module-webif.c
  static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value) {
  	if (no_data)
  		tpl_addVar(vars, TPLADD, varname, "N/A");
-@@ -4808,6 +4822,94 @@
+@@ -4847,6 +4861,94 @@
  }
  #endif
  
@@ -8404,7 +8416,7 @@ Index: module-webif.c
  static char *send_oscam_status(struct templatevars * vars, struct uriparams * params, int32_t apicall)
  {
  	int32_t i;
-@@ -6392,7 +6494,7 @@
+@@ -6464,7 +6566,7 @@
  	tpl_addVar(vars, TPLADD, "FILTERFORM", tpl_getTpl(vars, "FILTERFORM"));
  }
  
@@ -8413,7 +8425,7 @@ Index: module-webif.c
  
  struct files
  {
-@@ -6455,6 +6557,10 @@
+@@ -6527,6 +6629,10 @@
  #ifdef WITH_EMU
  		{ "SoftCam.Key",     MNU_CFG_FSOFTCAMKEY,FTYPE_CONFIG },  // id 30
  #endif
@@ -8424,7 +8436,7 @@ Index: module-webif.c
  		{ NULL, 0, 0 },
  	};
  
-@@ -6527,6 +6633,10 @@
+@@ -6599,6 +6705,10 @@
  				writable = 1;
  				get_config_filename(targetfile, sizeof(targetfile), entry->file);
  				break;
@@ -8435,7 +8447,7 @@ Index: module-webif.c
  			case FTYPE_VERSION:
  				get_tmp_dir_filename(targetfile, sizeof(targetfile), entry->file);
  				break;
-@@ -7524,6 +7634,23 @@
+@@ -7596,6 +7706,23 @@
  		}
  
  	}
@@ -8459,7 +8471,7 @@ Index: module-webif.c
  	else
  	{
  		tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "part not found");
-@@ -7753,6 +7880,30 @@
+@@ -7825,6 +7952,30 @@
  		else { return tpl_getTpl(vars, "PREAUTOCONF"); }   // something failed
  
  	}
@@ -8490,7 +8502,7 @@ Index: module-webif.c
  	else
  	{
  		if(strlen(getParam(params, "token")) > 0)   // parse autoconf token
-@@ -7834,6 +7985,10 @@
+@@ -7906,6 +8057,10 @@
  
  static int8_t check_valid_origin(IN_ADDR_T addr)
  {
@@ -8501,7 +8513,7 @@ Index: module-webif.c
  
  	// check whether requesting IP is in allowed IP ranges
  	if(check_ip(cfg.http_allowed, addr))
-@@ -7933,7 +8088,8 @@
+@@ -8005,7 +8160,8 @@
  		bufsize += n;
  
  		//max request size 200kb
@@ -8511,7 +8523,7 @@ Index: module-webif.c
  		{
  			cs_log("error: too much data received from %s", cs_inet_ntoa(in));
  			NULLFREE(*result);
-@@ -8434,6 +8590,11 @@
+@@ -8506,6 +8662,11 @@
  				break;
  			//case 30: jquery.js
  #endif
@@ -8525,7 +8537,7 @@ Index: module-webif.c
  				break;
 Index: oscam-chk.c
 ===================================================================
---- oscam-chk.c	(revision 1542)
+--- oscam-chk.c	(revision 1560)
 +++ oscam-chk.c	(working copy)
 @@ -1110,6 +1110,101 @@
  	return 1;
@@ -8631,7 +8643,7 @@ Index: oscam-chk.c
  {
 Index: oscam-chk.h
 ===================================================================
---- oscam-chk.h	(revision 1542)
+--- oscam-chk.h	(revision 1560)
 +++ oscam-chk.h	(working copy)
 @@ -5,6 +5,18 @@
  #define SRVID_ZERO  0 // srvid + 0000 (used for service-filter bypass)
@@ -8665,7 +8677,7 @@ Index: oscam-chk.h
  int32_t chk_is_fakecw(uint8_t *cw);
 Index: oscam-client.c
 ===================================================================
---- oscam-client.c	(revision 1542)
+--- oscam-client.c	(revision 1560)
 +++ oscam-client.c	(working copy)
 @@ -479,6 +479,7 @@
  void cs_disconnect_client(struct s_client *client)
@@ -8705,7 +8717,7 @@ Index: oscam-client.c
  #ifdef MODULE_CCCAM
 Index: oscam-conf-chk.c
 ===================================================================
---- oscam-conf-chk.c	(revision 1542)
+--- oscam-conf-chk.c	(revision 1560)
 +++ oscam-conf-chk.c	(working copy)
 @@ -333,7 +333,7 @@
  			continue;
@@ -8749,7 +8761,7 @@ Index: oscam-conf-chk.c
  			{
 Index: oscam-conf.c
 ===================================================================
---- oscam-conf.c	(revision 1542)
+--- oscam-conf.c	(revision 1560)
 +++ oscam-conf.c	(working copy)
 @@ -119,14 +119,28 @@
  			}
@@ -8837,7 +8849,7 @@ Index: oscam-conf.c
 +}
 Index: oscam-conf.h
 ===================================================================
---- oscam-conf.h	(revision 1542)
+--- oscam-conf.h	(revision 1560)
 +++ oscam-conf.h	(working copy)
 @@ -12,6 +12,7 @@
  	OPT_STRING,
@@ -8873,7 +8885,7 @@ Index: oscam-conf.h
  #endif
 Index: oscam-config-global.c
 ===================================================================
---- oscam-config-global.c	(revision 1542)
+--- oscam-config-global.c	(revision 1560)
 +++ oscam-config-global.c	(working copy)
 @@ -1277,7 +1277,7 @@
  	DEF_OPT_SAVE_FUNC(dvbapi_should_save_fn),
@@ -8923,9 +8935,9 @@ Index: oscam-config-global.c
  }
 Index: oscam-config-reader.c
 ===================================================================
---- oscam-config-reader.c	(revision 1542)
+--- oscam-config-reader.c	(revision 1560)
 +++ oscam-config-reader.c	(working copy)
-@@ -1171,6 +1171,33 @@
+@@ -1186,6 +1186,33 @@
  	return count;
  }
  
@@ -8961,7 +8973,7 @@ Index: oscam-config-reader.c
  	FILE *f = create_config_file(cs_srvr);
 Index: oscam-config.c
 ===================================================================
---- oscam-config.c	(revision 1542)
+--- oscam-config.c	(revision 1560)
 +++ oscam-config.c	(working copy)
 @@ -12,6 +12,7 @@
  #include "oscam-lock.h"
@@ -8986,7 +8998,7 @@ Index: oscam-config.c
  	int32_t i;
 Index: oscam-config.h
 ===================================================================
---- oscam-config.h	(revision 1542)
+--- oscam-config.h	(revision 1560)
 +++ oscam-config.h	(working copy)
 @@ -2,6 +2,8 @@
  #define OSCAM_CONFIG_H_
@@ -9008,7 +9020,7 @@ Index: oscam-config.h
  void    chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
 Index: oscam-ecm.c
 ===================================================================
---- oscam-ecm.c	(revision 1542)
+--- oscam-ecm.c	(revision 1560)
 +++ oscam-ecm.c	(working copy)
 @@ -1818,6 +1818,27 @@
  //chid calculation from module stat to here
@@ -9040,7 +9052,7 @@ Index: oscam-ecm.c
  	if(!er->ecmlen)
 Index: oscam-ecm.h
 ===================================================================
---- oscam-ecm.h	(revision 1542)
+--- oscam-ecm.h	(revision 1560)
 +++ oscam-ecm.h	(working copy)
 @@ -15,6 +15,8 @@
  uint32_t get_subid(ECM_REQUEST *er);
@@ -9053,7 +9065,7 @@ Index: oscam-ecm.h
  void free_push_in_ecm(ECM_REQUEST *ecm);
 Index: oscam-net.c
 ===================================================================
---- oscam-net.c	(revision 1542)
+--- oscam-net.c	(revision 1560)
 +++ oscam-net.c	(working copy)
 @@ -156,6 +156,16 @@
  #endif
@@ -9092,7 +9104,7 @@ Index: oscam-net.c
  	rc = poll(pfd, 1, 0);
 Index: oscam-net.h
 ===================================================================
---- oscam-net.h	(revision 1542)
+--- oscam-net.h	(revision 1560)
 +++ oscam-net.h	(working copy)
 @@ -32,6 +32,8 @@
  void set_null_ip(IN_ADDR_T *ip);
@@ -9105,7 +9117,7 @@ Index: oscam-net.h
  void setTCPTimeouts(int32_t sock);
 Index: oscam-reader.c
 ===================================================================
---- oscam-reader.c	(revision 1542)
+--- oscam-reader.c	(revision 1560)
 +++ oscam-reader.c	(working copy)
 @@ -1,10 +1,18 @@
  #define MODULE_LOG_PREFIX "reader"
@@ -9448,7 +9460,7 @@ Index: oscam-reader.c
 +
 Index: oscam-reader.h
 ===================================================================
---- oscam-reader.h	(revision 1542)
+--- oscam-reader.h	(revision 1560)
 +++ oscam-reader.h	(working copy)
 @@ -1,6 +1,28 @@
  #ifndef _OSCAM_READER_H_
@@ -9506,7 +9518,7 @@ Index: oscam-reader.h
 +#endif
 Index: oscam-simples.c
 ===================================================================
---- oscam-simples.c	(revision 1542)
+--- oscam-simples.c	(revision 1560)
 +++ oscam-simples.c	(working copy)
 @@ -302,6 +302,38 @@
  	return (buf);
@@ -9549,7 +9561,7 @@ Index: oscam-simples.c
  	uint8_t found = 0;
 Index: oscam-string.c
 ===================================================================
---- oscam-string.c	(revision 1542)
+--- oscam-string.c	(revision 1560)
 +++ oscam-string.c	(working copy)
 @@ -284,6 +284,24 @@
  	return 0;
@@ -9681,7 +9693,7 @@ Index: oscam-string.c
  	{
 Index: oscam-string.h
 ===================================================================
---- oscam-string.h	(revision 1542)
+--- oscam-string.h	(revision 1560)
 +++ oscam-string.h	(working copy)
 @@ -24,6 +24,9 @@
  int32_t dyn_word_atob(char *asc);
@@ -9706,7 +9718,7 @@ Index: oscam-string.h
  
 Index: oscam-work.c
 ===================================================================
---- oscam-work.c	(revision 1542)
+--- oscam-work.c	(revision 1560)
 +++ oscam-work.c	(working copy)
 @@ -15,6 +15,12 @@
  #include "module-cccshare.h"
@@ -9792,7 +9804,7 @@ Index: oscam-work.c
  					  action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 Index: oscam.c
 ===================================================================
---- oscam.c	(revision 1542)
+--- oscam.c	(revision 1560)
 +++ oscam.c	(working copy)
 @@ -2,7 +2,7 @@
  
@@ -10215,7 +10227,7 @@ Index: oscam.c
  
 Index: reader-bulcrypt.c
 ===================================================================
---- reader-bulcrypt.c	(revision 1542)
+--- reader-bulcrypt.c	(revision 1560)
 +++ reader-bulcrypt.c	(working copy)
 @@ -242,6 +242,8 @@
  		if(!isdigit((uchar)card_serial[i]))
@@ -10244,7 +10256,7 @@ Index: reader-bulcrypt.c
  				get_tiername(i, 0x4aee, tmp);
 Index: reader-common.c
 ===================================================================
---- reader-common.c	(revision 1542)
+--- reader-common.c	(revision 1560)
 +++ reader-common.c	(working copy)
 @@ -2,6 +2,8 @@
  
@@ -10393,7 +10405,7 @@ Index: reader-common.c
  void cardreader_close(struct s_reader *reader)
 Index: reader-common.h
 ===================================================================
---- reader-common.h	(revision 1542)
+--- reader-common.h	(revision 1560)
 +++ reader-common.h	(working copy)
 @@ -5,6 +5,8 @@
  #define SKIPPED 2
@@ -10406,7 +10418,7 @@ Index: reader-common.h
  #include "oscam-string.h"
 Index: reader-conax.c
 ===================================================================
---- reader-conax.c	(revision 1542)
+--- reader-conax.c	(revision 1560)
 +++ reader-conax.c	(working copy)
 @@ -192,6 +192,16 @@
  		}
@@ -10445,7 +10457,7 @@ Index: reader-conax.c
  		}
 Index: reader-cryptoworks.c
 ===================================================================
---- reader-cryptoworks.c	(revision 1542)
+--- reader-cryptoworks.c	(revision 1560)
 +++ reader-cryptoworks.c	(working copy)
 @@ -8,6 +8,7 @@
  struct bignum_st;
@@ -10590,7 +10602,7 @@ Index: reader-cryptoworks.c
  					rdr_log(reader, "chid: %02X%02X, date: %s - %s, name: %s",
 Index: reader-dgcrypt.c
 ===================================================================
---- reader-dgcrypt.c	(revision 1542)
+--- reader-dgcrypt.c	(revision 1560)
 +++ reader-dgcrypt.c	(working copy)
 @@ -115,6 +115,8 @@
  	if(!dgcrypt_cmd(rdr, cmd_LABEL, sizeof(cmd_LABEL), cta_res, &cta_lr, 4))
@@ -10603,7 +10615,7 @@ Index: reader-dgcrypt.c
  					  b2ll(7, rdr->hexserial),
 Index: reader-dre-cas.c
 ===================================================================
---- reader-dre-cas.c	(revision 1542)
+--- reader-dre-cas.c	(revision 1560)
 +++ reader-dre-cas.c	(working copy)
 @@ -364,7 +364,7 @@
  				int32_t endday = temp.tm_mday;
@@ -10616,7 +10628,7 @@ Index: reader-dre-cas.c
  	
 Index: reader-dre.c
 ===================================================================
---- reader-dre.c	(revision 1542)
+--- reader-dre.c	(revision 1560)
 +++ reader-dre.c	(working copy)
 @@ -251,7 +251,7 @@
  				int32_t endday = temp.tm_mday;
@@ -10629,7 +10641,7 @@ Index: reader-dre.c
  	
 Index: reader-griffin.c
 ===================================================================
---- reader-griffin.c	(revision 1542)
+--- reader-griffin.c	(revision 1560)
 +++ reader-griffin.c	(working copy)
 @@ -270,6 +270,9 @@
  	griffin_cmd(GRIFFIN_CMD_GET_ASCII_SERIAL, NULL, 0, 14);
@@ -10643,7 +10655,7 @@ Index: reader-griffin.c
  
 Index: reader-irdeto.c
 ===================================================================
---- reader-irdeto.c	(revision 1542)
+--- reader-irdeto.c	(revision 1560)
 +++ reader-irdeto.c	(working copy)
 @@ -448,6 +448,10 @@
  	}
@@ -10667,7 +10679,7 @@ Index: reader-irdeto.c
  							{
 Index: reader-nagra.c
 ===================================================================
---- reader-nagra.c	(revision 1542)
+--- reader-nagra.c	(revision 1560)
 +++ reader-nagra.c	(working copy)
 @@ -633,6 +633,7 @@
  							   tier_date(b2i(2, cta_res + 20) - 0x7f7, ds, 15),
@@ -10712,7 +10724,7 @@ Index: reader-nagra.c
  				}
 Index: reader-seca.c
 ===================================================================
---- reader-seca.c	(revision 1542)
+--- reader-seca.c	(revision 1560)
 +++ reader-seca.c	(working copy)
 @@ -121,7 +121,7 @@
  	}
@@ -10746,7 +10758,7 @@ Index: reader-seca.c
  	
 Index: reader-tongfang.c
 ===================================================================
---- reader-tongfang.c	(revision 1542)
+--- reader-tongfang.c	(revision 1560)
 +++ reader-tongfang.c	(working copy)
 @@ -77,6 +77,9 @@
  	memcpy(pairing_cmd + 5, boxID, sizeof(boxID));
@@ -10760,7 +10772,7 @@ Index: reader-tongfang.c
  					  reader->hexserial[3], reader->hexserial[4], reader->hexserial[5],
 Index: reader-viaccess.c
 ===================================================================
---- reader-viaccess.c	(revision 1542)
+--- reader-viaccess.c	(revision 1560)
 +++ reader-viaccess.c	(working copy)
 @@ -151,7 +151,7 @@
  					tm.tm_mon = vd.month_e - 1; // january is 0 in tm_mon
@@ -10817,7 +10829,7 @@ Index: reader-viaccess.c
  		insac[4] = 0;
 Index: reader-videoguard1.c
 ===================================================================
---- reader-videoguard1.c	(revision 1542)
+--- reader-videoguard1.c	(revision 1560)
 +++ reader-videoguard1.c	(working copy)
 @@ -90,7 +90,7 @@
  		memset(&timeinfo, 0, sizeof(struct tm));
@@ -10845,7 +10857,7 @@ Index: reader-videoguard1.c
  					  boxID[0], boxID[1], boxID[2], boxID[3]);
 Index: reader-videoguard12.c
 ===================================================================
---- reader-videoguard12.c	(revision 1542)
+--- reader-videoguard12.c	(revision 1560)
 +++ reader-videoguard12.c	(working copy)
 @@ -88,7 +88,7 @@
  		struct tm timeinfo;
@@ -10874,7 +10886,7 @@ Index: reader-videoguard12.c
  					  reader->caid, reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], boxID[0], boxID[1], boxID[2], boxID[3]);
 Index: reader-videoguard2.c
 ===================================================================
---- reader-videoguard2.c	(revision 1542)
+--- reader-videoguard2.c	(revision 1560)
 +++ reader-videoguard2.c	(working copy)
 @@ -287,7 +287,7 @@
  							{
@@ -10921,7 +10933,7 @@ Index: reader-videoguard2.c
  			reader->caid);
 Index: webif/files/menu.html
 ===================================================================
---- webif/files/menu.html	(revision 1542)
+--- webif/files/menu.html	(revision 1560)
 +++ webif/files/menu.html	(working copy)
 @@ -10,7 +10,7 @@
  		<LI CLASS="##CMENUACTIVE7##"><A HREF="files.html?file=logfile">logfile</A></LI>
