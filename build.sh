@@ -18,29 +18,30 @@ export HISDK_INCLUDE=$dir/u5sdk/include
 export HISDK_LIBRARY=$dir/u5sdk/lib
 ############
 oscam_new(){
-#SVN_REVISION=$(date +"%Y-%m-%d")
-SVN_REVISION=$(date +"%m-%d-%Y-%H-%M-%S")
-[ ! -e $sources/oscam_new_test ] && svn co -r 1560 https://github.com/oscam-emu/oscam-patched/trunk oscam_new_test;
+SVN_REVISION=$(date +"%m%d-%H%M%S")
+[ ! -e $sources/oscam_new_test ] && svn co -r 1587 https://github.com/oscam-emu/oscam-patched/trunk oscam_new_test;
 cd $sources/oscam_new_test
 [ ! -e $sources/oscam_new_test/module-dvbapi-his.c ] && patch -p0 < $dir/patches/sky_new_test.patch;
 make clean
 make config
 make android-arm-hisky -j16 \
+		USE_HISKY=1 \
 		CROSS=${CROSS} \
 		USE_LIBCRYPTO=1 \
-		USE_HISKY=1 \
+		CFLAGS="$CFLAGS" \
+		LDFLAGS="$LDFLAGS" \
 		CONF_DIR="/data/oscam" \
 		HISKY_LIB="-L$HISDK_LIBRARY -lhi_msp -lhi_common" \
-		HISKY_FLAGS="-D__ARMEL__ -I$HISDK_INCLUDE -DWITH_HISILICON=1 -DSDKV600 -DSDKV660 -DSDK3798C"\
-		OSCAM_VERSION_NUMBER=$SVN_REVISION
+		HISKY_FLAGS="-D__ARMEL__ -I$HISDK_INCLUDE -DWITH_HISILICON=1 -DSDKV600 -DSDKV660 -DSDK3798C" \
+		OSCAM_VERSION_NUMBER="_test_$SVN_REVISION"
 
 echo SVN_REVISION:$SVN_REVISION
-cp -af Distribution/oscam-1.20.sky.$SVN_REVISION $dir
+cp -af Distribution/oscam-1.20*$SVN_REVISION*-his $dir
 ### diff ###
 # svn st
 # svn add cscrypt/aes_ctx.c cscrypt/aes_ctx.h cscrypt/des_ssl.c cscrypt/des_ssl.h csctapi/ifd_hisky.c csctapi/ifd_hisky.h module-constcw.h module-dvbapi-his.c module-dvbapi-his.h
 # svn diff > ../../sky_new_test_$(date +"%m-%d-%Y-%H-%M-%S").patch
-cp $dir/oscam-1.20.sky.$SVN_REVISION $dir/oscam
+cp $dir/oscam-1.20*$SVN_REVISION*-his $dir/oscam
 zip -j $dir/oscam-armeabi-v7a.zip -xi $dir/oscam
 rm -rf $dir/oscam
 }
