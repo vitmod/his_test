@@ -15481,10 +15481,12 @@ Index: globals.h
  	int32_t (*card_init)(struct s_reader *reader, struct s_ATR *);
  	void    (*card_done)(struct s_reader *reader);
  	int32_t (*card_info)(struct s_reader *);
-@@ -831,12 +1142,25 @@
+@@ -830,13 +1141,26 @@
+ 	int32_t (*get_tunemm_filter)(struct s_reader *, struct s_csystem_emm_filter **, unsigned int *);
  };
  
- #define MAX_ECM_SIZE 512
+-#define MAX_ECM_SIZE 512
++#define MAX_ECM_SIZE 1024
 +// sky(powervu)
 +typedef struct cw_extendted_t
 +{
@@ -15625,7 +15627,15 @@ Index: globals.h
  struct s_reader                                     //contains device info, reader info and card info
  {
  	uint8_t         keepalive;
-@@ -1279,6 +1655,7 @@
+@@ -1270,6 +1646,7 @@
+ 	int8_t          fallback;
+ 	FTAB            fallback_percaid;
+ 	FTAB            localcards;
++	FTAB            disablecrccws_only_for;
+ #ifdef CS_CACHEEX
+ 	CECSP           cacheex; //CacheEx Settings
+ #endif
+@@ -1279,6 +1656,7 @@
  	char            *description;
  #endif
  	char            device[128];
@@ -15633,7 +15643,7 @@ Index: globals.h
  	uint16_t        slot;                           // in case of multiple slots like sc8in1; first slot = 1
  	int32_t         handle;                         // device handle
  	int64_t         handle_nr;                      // device handle_nr for mutiple readers same driver
-@@ -1294,6 +1671,7 @@
+@@ -1294,6 +1672,7 @@
  	CAIDTAB         ctab;
  	uint32_t        boxid;
  	int8_t          nagra_read;                     // read nagra ncmed records: 0 Disabled (default), 1 read all records, 2 read valid records only
@@ -15641,7 +15651,7 @@ Index: globals.h
  	uint8_t         boxkey[16];                      // n3 boxkey 8byte, seca sessionkey 16byte
  	int8_t          force_irdeto;
  	uchar           rsa_mod[120];                   // rsa modulus for nagra cards.
-@@ -1338,8 +1716,55 @@
+@@ -1338,8 +1717,55 @@
  	int8_t          ncd_connect_on_init;
  	int8_t          ncd_disable_server_filt;
  	int8_t          ncd_proto;
@@ -15697,7 +15707,7 @@ Index: globals.h
  #ifdef MODULE_CCCAM
  	char            cc_version[7];                  // cccam version
  	char            cc_build[7];                    // cccam build number
-@@ -1418,6 +1843,10 @@
+@@ -1418,6 +1844,10 @@
  	unsigned char   VgFuse;
  	unsigned char	VgCountryC[3];
  	unsigned char   VgRegionC[8];
@@ -15708,7 +15718,7 @@ Index: globals.h
  #ifdef WITH_LB
  	int32_t         lb_weight;                      //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
  	int8_t          lb_force_fallback;				//force this reader as fallback if fallback or fallback_percaid paramters set
-@@ -1465,6 +1894,10 @@
+@@ -1465,6 +1895,10 @@
  	uint8_t		gbox_cccam_reshare;
  	char		last_gsms[128];
  #endif
@@ -15719,7 +15729,7 @@ Index: globals.h
  
  #ifdef MODULE_PANDORA
  	uint8_t         pand_send_ecm;
-@@ -1473,6 +1906,34 @@
+@@ -1473,6 +1907,34 @@
  	uint8_t         ghttp_use_ssl;
  #endif
  	uint8_t cnxlastecm; // == 0 - las ecm has not been paired ecm, > 0 last ecm has been paired ecm
@@ -15754,20 +15764,31 @@ Index: globals.h
  	LLIST           *emmstat; //emm stats
  	CS_MUTEX_LOCK   emmstat_lock;
  	struct s_reader *next;
-@@ -1679,6 +2140,7 @@
+@@ -1499,6 +1961,8 @@
+ #ifdef CS_CACHEEX
+ 	CECSP           cacheex; //CacheEx Settings
+ 	uint8_t         no_wait_time;
++	uint8_t         disablecrccacheex;
++	FTAB            disablecrccacheex_only_for;
+ #endif
+ 	int16_t         allowedprotocols;
+ 	LLIST           *aureader_list;
+@@ -1679,6 +2143,9 @@
  	char            *emmlogdir;
  	char            *logfile;
  	char            *mailfile;
-+	int32_t		logsvrsecrete;	// sky(a)
++	int8_t          disablecrccws;                  // 1=disable cw checksum test. 0=enable checksum check
++	FTAB            disablecrccws_only_for;         // ignore checksum for selected caid provid
++	int32_t         logsvrsecrete;                  // sky(a)
  	uint8_t         logtostdout;
  	uint8_t         logtosyslog;
  	int8_t          logduplicatelines;
-@@ -1988,10 +2450,10 @@
+@@ -1988,10 +2455,10 @@
  	int16_t         ecmlen;
  } STAT_QUERY;
  
 -
-+#define MAX_EMM_SIZE 	288
++#define MAX_EMM_SIZE 	1024
  typedef struct emm_packet_t
  {
 -	uchar           emm[258];
@@ -15775,7 +15796,7 @@ Index: globals.h
  	int16_t         emmlen;
  	uchar           caid[2];
  	uchar           provid[4];
-@@ -2022,6 +2484,9 @@
+@@ -2022,6 +2489,9 @@
  // These are used pretty much everywhere
  extern struct s_config cfg;
  extern uint16_t cs_dblevel;
@@ -15785,7 +15806,7 @@ Index: globals.h
  
  #include "oscam-log.h"
  #include "oscam-log-reader.h"
-@@ -2044,6 +2509,8 @@
+@@ -2044,6 +2514,8 @@
  char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
  char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
  char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);
@@ -15794,7 +15815,7 @@ Index: globals.h
  void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang);
  bool boxtype_is(const char *boxtype);
  bool boxname_is(const char *boxname);
-@@ -2059,6 +2526,11 @@
+@@ -2059,6 +2531,11 @@
  static inline bool caid_is_betacrypt(uint16_t caid) { return caid >> 8 == 0x17; }
  static inline bool caid_is_nagra(uint16_t caid) { return caid >> 8 == 0x18; }
  static inline bool caid_is_bulcrypt(uint16_t caid) { return caid == 0x5581 || caid == 0x4AEE; }
@@ -15833,17 +15854,45 @@ Index: module-cacheex.c
  	if(er->rc >= E_NOTFOUND) { return; }
  
  	//cacheex=2 mode: push (server->remote)
-@@ -632,7 +635,8 @@
+@@ -626,12 +629,29 @@
+ 		return 0;
+ 	}
+ 
++	uint8_t selectedForIgnChecksum = chk_if_ignore_checksum(er, cfg.disablecrccws, &cfg.disablecrccws_only_for);
++			if (cl->typ == 'c') {
++				selectedForIgnChecksum += chk_if_ignore_checksum (er, cl->account->disablecrccacheex, &cl->account->disablecrccacheex_only_for);
++			}
++			if (cl->typ == 'p') {
++				selectedForIgnChecksum += chk_if_ignore_checksum (er, cl->reader->disablecrccws, &cl->reader->disablecrccws_only_for);
++			}
++
+ 	uint8_t i, c;
+ 	uint8_t null = 0;
++	if(cfg.disablecrccws == 0 || (cl->typ == 'c' && cl->account->disablecrccacheex == 0) || ( cl->typ == 'p' && cl->reader->disablecrccws == 0))
++	{
+ 	for(i = 0; i < 16; i += 4)
  	{
  		c = ((er->cw[i] + er->cw[i + 1] + er->cw[i + 2]) & 0xff);
  		null |= (er->cw[i] | er->cw[i + 1] | er->cw[i + 2]);
--		if(er->cw[i + 3] != c)
++
++		if((i!=12) && selectedForIgnChecksum && (er->cw[i + 3] != c)){
++			break;
++		}
++
 +		// sky(2016,powervu)
-+		if (!er->cwdesalgo && er->cw[i + 3] != c)
++		//if (!er->cwdesalgo && er->cw[i + 3] != c)
+ 		if(er->cw[i + 3] != c)
  		{
  			cs_log_dump_dbg(D_CACHEEX, er->cw, 16, "push received cw with chksum error from %s", csp ? "csp" : username(cl));
- 			cl->cwcacheexerr++;
-@@ -831,7 +835,8 @@
+@@ -641,6 +661,7 @@
+ 			return 0;
+ 		}
+ 	}
++	}
+ 
+ 	if(null == 0 || chk_is_null_CW(er->cw))
+ 	{
+@@ -831,7 +852,8 @@
  
  
  
@@ -28700,7 +28749,20 @@ Index: module-webif.c
  	if(write_config() == 0)
  	{
  		tpl_addMsg(vars, "Configuration was saved.");
-@@ -841,6 +876,11 @@
+@@ -569,6 +604,12 @@
+ 	tpl_addVar(vars, TPLADD, "DOUBLECHECKCAID", value);
+ 	free_mk_t(value);
+ 
++	tpl_addVar(vars, TPLADD, "DISABLECRCCWSCHECKEDGLOBAL", (cfg.disablecrccws == 1) ? "checked" : "");
++
++	value = mk_t_ftab(&cfg.disablecrccws_only_for);
++	tpl_addVar(vars, TPLADD, "IGNCHKSUMONLYFORGLOBAL", value);
++	free_mk_t(value);
++
+ #ifdef LEDSUPPORT
+ 	if(cfg.enableled == 1)
+ 		{ tpl_addVar(vars, TPLADD, "ENABLELEDSELECTED1", "selected"); }
+@@ -841,6 +882,11 @@
  {
  	int32_t i;
  
@@ -28712,7 +28774,7 @@ Index: module-webif.c
  	setActiveSubMenu(vars, MNU_CFG_NEWCAMD);
  
  	webif_save_config("newcamd", vars, params);
-@@ -929,7 +969,11 @@
+@@ -929,7 +975,11 @@
  #ifdef MODULE_CCCAM
  static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *params)
  {
@@ -28725,7 +28787,7 @@ Index: module-webif.c
  	setActiveSubMenu(vars, MNU_CFG_CCCAM);
  
  	if(strcmp(getParam(params, "button"), "Refresh list") == 0)
-@@ -1030,6 +1074,11 @@
+@@ -1030,6 +1080,11 @@
  {
  	int32_t i;
  
@@ -28737,7 +28799,7 @@ Index: module-webif.c
  	setActiveSubMenu(vars, MNU_CFG_WEBIF);
  
  	webif_save_config("webif", vars, params);
-@@ -1215,7 +1264,7 @@
+@@ -1215,7 +1270,7 @@
  #endif
  
  #ifdef HAVE_DVBAPI
@@ -28746,7 +28808,7 @@ Index: module-webif.c
  
  static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparams *params)
  {
-@@ -1237,7 +1286,7 @@
+@@ -1237,7 +1292,7 @@
  	tpl_printf(vars, TPLADD, "BOXTYPE", "<option value=\"\"%s>None</option>\n", cfg.dvbapi_boxtype == 0 ? " selected" : "");
  	for(i = 1; i <= BOXTYPES; i++)
  	{
@@ -28755,7 +28817,7 @@ Index: module-webif.c
  	}
  
  	tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, cfg.dvbapi_usr));
-@@ -1392,9 +1441,11 @@
+@@ -1392,9 +1447,11 @@
  
  static char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, int32_t apicall)
  {
@@ -28769,7 +28831,7 @@ Index: module-webif.c
  
  	if(!apicall) { setActiveMenu(vars, MNU_READERS); }
  	if(!apicall)
-@@ -1416,48 +1467,193 @@
+@@ -1416,48 +1473,193 @@
  		if(!cfg.http_readonly)
  			{ refresh_oscam(REFR_READERS); }
  	}
@@ -28980,7 +29042,7 @@ Index: module-webif.c
  				inactivate_reader(rdr);
  				ll_remove(configured_readers, rdr);
  
-@@ -1470,7 +1666,6 @@
+@@ -1470,7 +1672,6 @@
  
  	if(strcmp(getParam(params, "action"), "reread") == 0)
  	{
@@ -28988,7 +29050,7 @@ Index: module-webif.c
  		if(rdr)
  		{
  			struct s_client *cl = rdr->client;
-@@ -1654,6 +1849,14 @@
+@@ -1654,6 +1855,14 @@
  
  	if(!apicall)
  	{
@@ -29003,7 +29065,7 @@ Index: module-webif.c
  #ifdef MODULE_CAMD33
  		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>camd33</option>\n");
  #endif
-@@ -1664,12 +1867,14 @@
+@@ -1664,12 +1873,14 @@
  		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>cs378x</option>\n");
  #endif
  #ifdef MODULE_NEWCAMD
@@ -29021,7 +29083,7 @@ Index: module-webif.c
  #ifdef MODULE_GBOX
  		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>gbox</option>\n");
  #endif
-@@ -1707,17 +1912,24 @@
+@@ -1707,17 +1918,24 @@
  
  static char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *params)
  {
@@ -29050,7 +29112,7 @@ Index: module-webif.c
  		// Add new reader
  		struct s_reader *newrdr;
  		if(!cs_malloc(&newrdr, sizeof(struct s_reader))) { return "0"; }
-@@ -1727,20 +1939,33 @@
+@@ -1727,20 +1945,33 @@
  				{ chk_reader((*params).params[i], (*params).values[i], newrdr); }
  		}
  		module_reader_set(newrdr);
@@ -29088,7 +29150,7 @@ Index: module-webif.c
  		char servicelabels[1024] = "";
  		char servicelabelslb[1024] = "";
  
-@@ -1760,17 +1985,74 @@
+@@ -1760,17 +1991,74 @@
  		}
  		chk_reader("services", servicelabels, rdr);
  		chk_reader("lb_whitelist_services", servicelabelslb, rdr);
@@ -29167,7 +29229,7 @@ Index: module-webif.c
  	if(!rdr)
  		{ return NULL; }
  
-@@ -1795,7 +2077,10 @@
+@@ -1795,7 +2083,10 @@
  	// Key Newcamd
  	for(i = 0; i < (int32_t)sizeof(rdr->ncd_key); i++)
  		{ tpl_printf(vars, TPLAPPEND, "NCD_KEY", "%02X", rdr->ncd_key[i]); }
@@ -29179,7 +29241,19 @@ Index: module-webif.c
  	// Pincode
  	tpl_addVar(vars, TPLADD, "PINCODE", rdr->pincode);
  
-@@ -2108,24 +2393,22 @@
+@@ -1861,6 +2152,11 @@
+ 	tpl_addVar(vars, TPLADD, "FALLBACK_PERCAID", value);
+ 	free_mk_t(value);
+ 
++	// disable checksum test only for selected caid/provid
++	value = mk_t_ftab(&rdr->disablecrccws_only_for);
++	tpl_addVar(vars, TPLADD, "IGN_CHKSUM_ONLYFOR", value);
++	free_mk_t(value);
++
+ #ifdef CS_CACHEEX
+ 	// Cacheex
+ 	if(!apicall)
+@@ -2108,24 +2404,22 @@
  	tpl_printf(vars, TPLADD, "MHZ", "%d", rdr->mhz);
  	tpl_printf(vars, TPLADD, "CARDMHZ", "%d", rdr->cardmhz);
  
@@ -29212,7 +29286,7 @@ Index: module-webif.c
  	}
  
  	// Group
-@@ -2319,7 +2602,6 @@
+@@ -2319,7 +2613,6 @@
  	// Show only parameters which needed for the reader
  	switch(rdr->typ)
  	{
@@ -29220,7 +29294,7 @@ Index: module-webif.c
  	case R_DB2COM1:
  	case R_DB2COM2:
  	case R_MOUSE :
-@@ -2350,6 +2632,13 @@
+@@ -2350,6 +2643,13 @@
  		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGGBOXBIT"));
  		break;
  	case R_NEWCAMD:
@@ -29234,7 +29308,7 @@ Index: module-webif.c
  		if(rdr->ncd_proto == NCD_525)
  		{
  			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD525BIT"));
-@@ -2364,6 +2653,17 @@
+@@ -2364,6 +2664,17 @@
  		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
  		break;
  #endif
@@ -29252,7 +29326,7 @@ Index: module-webif.c
  	default :
  		tpl_addMsg(vars, "Error: protocol not resolvable");
  		break;
-@@ -2370,9 +2670,17 @@
+@@ -2370,9 +2681,17 @@
  
  	}
  
@@ -29272,7 +29346,7 @@ Index: module-webif.c
  		tpl_printf(vars, TPLADD, "CCCHOP", "%d", rdr->cc_hop);
  		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGHOPBIT"));
  	}
-@@ -2412,8 +2720,8 @@
+@@ -2412,8 +2731,8 @@
  	char *stxt[] = {"found", "cache1", "cache2", "cache3",
  					"not found", "timeout", "sleeping",
  					"fake", "invalid", "corrupt", "no card", "expdate",
@@ -29283,7 +29357,7 @@ Index: module-webif.c
  
  	if(strcmp(getParam(params, "action"), "resetstat") == 0)
  	{
-@@ -2682,7 +2990,7 @@
+@@ -2682,7 +3001,7 @@
  		}
  	}
  
@@ -29292,7 +29366,20 @@ Index: module-webif.c
  
  	if(!apicall)
  		{ return tpl_getTpl(vars, "READERSTATS"); }
-@@ -3896,13 +4204,14 @@
+@@ -2988,7 +3307,11 @@
+ 	tpl_addVar(vars, TPLADD, "ARCHECKED", (account->cacheex.allow_request == 1) ? "checked" : "");
+ 	tpl_addVar(vars, TPLADD, "AFCHECKED", (account->cacheex.allow_filter == 1) ? "checked" : "");
+ 	tpl_addVar(vars, TPLADD, "NWTCHECKED", (account->no_wait_time == 1) ? "checked" : "");
+-	
++	tpl_addVar(vars, TPLADD, "DISABLECRCCEX4USER", (account->disablecrccacheex == 1) ? "checked" : "");
++	value = mk_t_ftab(&account->disablecrccacheex_only_for);
++	tpl_addVar(vars, TPLADD, "IGNCRCCEX4USERONLYFOR", value);
++	free_mk_t(value);
++
+ #endif
+ 
+ #ifdef CW_CYCLE_CHECK
+@@ -3896,13 +4219,14 @@
  static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, int32_t apicall)
  {
  	if(!apicall) { setActiveMenu(vars, MNU_READERS); }
@@ -29310,7 +29397,7 @@ Index: module-webif.c
  	{
  
  		if(show_global_list || (rdr && rdr->typ == R_CCCAM && rdr->enable))
-@@ -3955,17 +4264,14 @@
+@@ -3955,17 +4279,14 @@
  
  		}
  		else
@@ -29331,7 +29418,7 @@ Index: module-webif.c
  
  			if(rdr)
  			{
-@@ -3988,15 +4294,15 @@
+@@ -3988,15 +4309,15 @@
  						localtime_r(&item->end, &end_t);
  
  						if(!apicall)
@@ -29351,7 +29438,7 @@ Index: module-webif.c
  						tpl_addVar(vars, TPLADD, "ENTENDDATE", tbuffer);
  
  						tpl_addVar(vars, TPLADD, "ENTEXPIERED", item->end > now ? "e_valid" : "e_expired");
-@@ -4144,8 +4450,9 @@
+@@ -4144,8 +4465,9 @@
  				tpl_addMsg(vars, "Reader does not exist or is not started!");
  			}
  		}
@@ -29362,7 +29449,7 @@ Index: module-webif.c
  	else
  	{
  		tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
-@@ -4176,9 +4483,10 @@
+@@ -4176,9 +4498,10 @@
  	{
  		lastid = strtoull(getParam(params, "lastid"), NULL, 10);
  	}
@@ -29375,7 +29462,7 @@ Index: module-webif.c
  #ifdef WITH_DEBUG
  	char *debuglvl = getParam(params, "debug");
  	if(strlen(debuglvl) > 0) {
-@@ -4188,13 +4496,13 @@
+@@ -4188,13 +4511,13 @@
  			cs_log("%s debug_level=%d", "all", cs_dblevel);
  		}
  	}
@@ -29393,7 +29480,7 @@ Index: module-webif.c
  		return tpl_getTpl(vars, "POLL");
  	}
  
-@@ -4202,12 +4510,13 @@
+@@ -4202,12 +4525,13 @@
  	if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
  		{ t_loghistptr = loghist; }
  	
@@ -29410,7 +29497,7 @@ Index: module-webif.c
  	for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
  	{
  		l1 = strlen(ptr1) + 1;
-@@ -4230,7 +4539,12 @@
+@@ -4230,7 +4554,12 @@
  		pos1 = strcspn(p_txt, "\n") + 1;
  		char str_out[pos1];
  		cs_strncpy(str_out, p_txt, pos1);
@@ -29424,7 +29511,7 @@ Index: module-webif.c
  
  		size_t b64_str_in = strlen(xml_encode(vars, str_out));
  		size_t b64_str_out = 32 + BASE64_LENGTH(b64_str_in);
-@@ -4239,13 +4553,13 @@
+@@ -4239,13 +4568,13 @@
  			{ continue; }
  		base64_encode(xml_encode(vars, str_out), b64_str_in, b64_str_out_buf, b64_str_out);
  
@@ -29442,7 +29529,7 @@ Index: module-webif.c
  		}
  		NULLFREE(b64_str_out_buf);
  	}
-@@ -4254,6 +4568,94 @@
+@@ -4254,6 +4583,94 @@
  }
  #endif
  
@@ -29537,7 +29624,7 @@ Index: module-webif.c
  static char *send_oscam_status(struct templatevars * vars, struct uriparams * params, int32_t apicall)
  {
  	int32_t i;
-@@ -4399,8 +4801,9 @@
+@@ -4399,8 +4816,9 @@
  	{
  		if(cl->kill) { continue; }
  #ifdef CS_CACHEEX
@@ -29549,7 +29636,7 @@ Index: module-webif.c
  #endif
  
  			// Reset template variables
-@@ -4633,8 +5036,15 @@
+@@ -4633,8 +5051,15 @@
  						else { tpl_addVar(vars, TPLADD, "CLIENTCRYPTED", ""); }
  					}
  					else { tpl_printf(vars, TPLADD, "CLIENTCRYPTED", "%d", cl->crypted); }
@@ -29565,7 +29652,7 @@ Index: module-webif.c
  					const char *proto = client_get_proto(cl);
  					webif_add_client_proto(vars, cl, proto, apicall);
  
-@@ -4694,7 +5104,7 @@
+@@ -4694,7 +5119,7 @@
  								}
  								tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBIT"));
  #else
@@ -29574,7 +29661,7 @@ Index: module-webif.c
  #endif
  							}
  							if(cl->last_caid == NO_CAID_VALUE || isec > cfg.hideclient_to) tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", "");
-@@ -4812,12 +5222,10 @@
+@@ -4812,12 +5237,10 @@
  									txt = "CCcam CacheEX";
  								}
  								else
@@ -29588,7 +29675,7 @@ Index: module-webif.c
  								break;
  							case CARD_INSERTED:
  								if(cl->typ == 'p')
-@@ -5565,6 +5973,30 @@
+@@ -5565,6 +5988,30 @@
  			{ return tpl_getTpl(vars, "APICONFIRMATION"); }
  
  	}
@@ -29619,7 +29706,7 @@ Index: module-webif.c
  	else
  	{
  		return tpl_getTpl(vars, "PRESHUTDOWN");
-@@ -5770,9 +6202,9 @@
+@@ -5770,9 +6217,9 @@
  	}
  	tpl_addVar(vars, TPLADD, "FILTERFORM", tpl_getTpl(vars, "FILTERFORM"));
  }
@@ -29631,7 +29718,7 @@ Index: module-webif.c
  struct files
  {
  	char *file;
-@@ -5797,6 +6229,16 @@
+@@ -5797,6 +6244,16 @@
  		{ "oscam.tiers",     MNU_CFG_FTIERS,    FTYPE_CONFIG },
  		{ "oscam.ratelimit", MNU_CFG_RATELIMIT, FTYPE_CONFIG },
  		{ "css_file_name",   MNU_CFG_FCSS,      FTYPE_CONFIG },
@@ -29648,7 +29735,7 @@ Index: module-webif.c
  #ifdef HAVE_DVBAPI
  		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   FTYPE_CONFIG },
  #endif
-@@ -5844,12 +6286,12 @@
+@@ -5844,12 +6301,12 @@
  #endif
  	}
  	// Process config files
@@ -29663,7 +29750,7 @@ Index: module-webif.c
  		{
  			if(!apicall) { setActiveSubMenu(vars, entry->menu_id); }
  			menu_id  = entry->menu_id;
-@@ -5860,6 +6302,10 @@
+@@ -5860,6 +6317,10 @@
  				writable = 1;
  				get_config_filename(targetfile, sizeof(targetfile), entry->file);
  				break;
@@ -29674,7 +29761,7 @@ Index: module-webif.c
  			case FTYPE_VERSION:
  				get_tmp_dir_filename(targetfile, sizeof(targetfile), entry->file);
  				break;
-@@ -5925,8 +6371,11 @@
+@@ -5925,8 +6386,11 @@
  					case MNU_CFG_WHITELIST:
  						global_whitelist_read();
  						break;
@@ -29688,7 +29775,7 @@ Index: module-webif.c
  					}
  				}
  			}
-@@ -5955,7 +6404,7 @@
+@@ -5955,7 +6419,7 @@
  		tpl_addVar(vars, TPLAPPEND, "FILECONTENT", "File not valid!");
  	}
  
@@ -29697,7 +29784,7 @@ Index: module-webif.c
  
  	if(!writable)
  	{
-@@ -6420,6 +6869,8 @@
+@@ -6420,6 +6884,8 @@
  {
  	uint64_t node = 0x00;
  	struct s_module *module = (cl->reader ? &cl->reader->ph : get_module(cl));
@@ -29706,7 +29793,7 @@ Index: module-webif.c
  #ifdef MODULE_CCCAM
  	if(module->num == R_CCCAM && cl->cc)
  	{
-@@ -6838,6 +7289,23 @@
+@@ -6838,6 +7304,23 @@
  		}
  
  	}
@@ -29730,7 +29817,7 @@ Index: module-webif.c
  	else
  	{
  		tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "part not found");
-@@ -7148,6 +7616,10 @@
+@@ -7148,6 +7631,10 @@
  
  static int8_t check_valid_origin(IN_ADDR_T addr)
  {
@@ -29741,7 +29828,7 @@ Index: module-webif.c
  
  	// check whether requesting IP is in allowed IP ranges
  	if(check_ip(cfg.http_allowed, addr))
-@@ -7247,9 +7719,9 @@
+@@ -7247,9 +7734,9 @@
  		bufsize += n;
  
  		//max request size 100kb
@@ -29754,7 +29841,7 @@ Index: module-webif.c
  			NULLFREE(*result);
  			*result = NULL;
  			return -1;
-@@ -7284,6 +7756,7 @@
+@@ -7284,6 +7771,7 @@
  static int32_t process_request(FILE * f, IN_ADDR_T in)
  {
  	int32_t ok = 0;
@@ -29762,7 +29849,7 @@ Index: module-webif.c
  	int8_t *keepalive = (int8_t *)pthread_getspecific(getkeepalive);
  	IN_ADDR_T addr = GET_IP();
  
-@@ -7297,7 +7770,9 @@
+@@ -7297,7 +7785,9 @@
  
  		// at this point we do all checks related origin IP, ranges and dyndns stuff
  		ok = check_valid_origin(addr);
@@ -29773,7 +29860,7 @@ Index: module-webif.c
  
  		// based on the failed origin checks we send a 403 to calling browser
  		if(!ok)
-@@ -7314,39 +7789,41 @@
+@@ -7314,39 +7804,41 @@
  		char *method, *path, *protocol, *str1, *saveptr1 = NULL, *authheader = NULL, *extraheader = NULL, *filebuf = NULL;
  		char *pch, *tmp, *buf, *nameInUrl, subdir[32];
  		/* List of possible pages */
@@ -29848,7 +29935,7 @@ Index: module-webif.c
  		};
  
  		int32_t pagescnt = sizeof(pages) / sizeof(char *); // Calculate the amount of items in array
-@@ -7441,6 +7918,8 @@
+@@ -7441,6 +7933,8 @@
  
  		parseParams(&params, pch);
  
@@ -29857,7 +29944,7 @@ Index: module-webif.c
  		if(!cfg.http_user || !cfg.http_pwd)
  			{ authok = 1; }
  
-@@ -7484,6 +7963,11 @@
+@@ -7484,6 +7978,11 @@
  			}
  		}
  
@@ -29869,7 +29956,7 @@ Index: module-webif.c
  		if(cfg.http_user && cfg.http_pwd)
  		{
  			if(!authok || strlen(opaque) != MD5_DIGEST_LENGTH * 2) { calculate_opaque(addr, opaque); }
-@@ -7552,7 +8036,9 @@
+@@ -7552,7 +8051,9 @@
  			time(&t);
  
  			localtime_r(&t, &lt);
@@ -29880,7 +29967,7 @@ Index: module-webif.c
  			tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
  			tpl_addVar(vars, TPLADD, "CS_SVN_VERSION", CS_SVN_VERSION);
  			tpl_addVar(vars, TPLADD, "CS_TARGET", CS_TARGET);
-@@ -7648,7 +8134,7 @@
+@@ -7648,7 +8149,7 @@
  			i = ll_count(cfg.v_list);
  			if(i > 0) { tpl_printf(vars, TPLADD, "FAILBANNOTIFIER", "<SPAN CLASS=\"span_notifier\">%d</SPAN>", i); }
  			tpl_printf(vars, TPLADD, "FAILBANNOTIFIERPOLL", "%d", i);
@@ -29889,7 +29976,7 @@ Index: module-webif.c
  			char *result = NULL;
  
  			// WebIf allows modifying many things. Thus, all pages except images/css/static are expected to be non-threadsafe!
-@@ -7748,6 +8234,11 @@
+@@ -7748,6 +8249,11 @@
  				result = send_oscam_logpoll(vars, &params);
  				break;
  #endif				
@@ -29901,7 +29988,7 @@ Index: module-webif.c
  			default:
  				result = send_oscam_status(vars, &params, 0);
  				break;
-@@ -7768,6 +8259,22 @@
+@@ -7768,6 +8274,22 @@
  					{ send_headers(f, 200, "OK", extraheader, "text/html", 0, strlen(result), NULL, 0); }
  				webif_write(result, f);
  			}
@@ -29924,7 +30011,7 @@ Index: module-webif.c
  			tpl_clear(vars);
  		}
  		NULLFREE(filebuf);
-@@ -8107,6 +8614,7 @@
+@@ -8107,6 +8629,7 @@
  #endif
  	cs_log("HTTP Server stopped");
  	free_client(cl);
@@ -29932,7 +30019,7 @@ Index: module-webif.c
  	close(sock);
  	return NULL;
  }
-@@ -8186,4 +8694,4 @@
+@@ -8186,4 +8709,4 @@
  	pthread_join(httpthread, NULL);
  }
  
@@ -31255,7 +31342,7 @@ Index: oscam-chk.c
  					return 1;
  				}
  			}
-@@ -663,52 +805,74 @@
+@@ -663,52 +805,101 @@
  	{
  		rdr = ea->reader;
  		if(chk_is_fixed_fallback(rdr, er))
@@ -31266,10 +31353,36 @@ Index: oscam-chk.c
  }
  
 -int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
++uint8_t chk_if_ignore_checksum(ECM_REQUEST *er, int8_t disablecrc, FTAB *disablecrc_only_for)
+ {
++	if(!disablecrc && !disablecrc_only_for->nfilts) { return 0; }
+ 
++		int32_t i, k;
++		for(i = 0; i < disablecrc_only_for->nfilts; i++)
++		{
++			uint16_t tcaid = disablecrc_only_for->filts[i].caid;
++			if(tcaid && (tcaid == er->caid || (tcaid < 0x0100 && (er->caid >> 8) == tcaid)))    //caid match
++			{
++
++				int32_t nprids = disablecrc_only_for->filts[i].nprids;
++				if(!nprids)  // No Provider ->Ok
++					{ return 1; }
++
++				for(k = 0; k < nprids; k++)
++				{
++					uint32_t prid =disablecrc_only_for->filts[i].prids[k];
++					if(prid == er->prid)    //Provider matches
++					{ return 1; }
++				}
++			}
++		}
++
++		return 0;
++}
++
 +// sky(changed return value)
 +int32_t chk_matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t chkMode)
- {
--
++{
 +	int32_t cAvail = 1;
  	//simple checks first:
 -	if(!er || !rdr)
@@ -31348,7 +31461,7 @@ Index: oscam-chk.c
  		int i, caid_found = 0;
  		for(i = 0; rdr->csystem->caids[i]; i++)
  		{
-@@ -721,82 +885,90 @@
+@@ -721,82 +912,90 @@
  				break;
  			}
  		}
@@ -31475,7 +31588,7 @@ Index: oscam-chk.c
  	}
  
  	//Checking entitlements:
-@@ -808,16 +980,14 @@
+@@ -808,16 +1007,14 @@
  		while((item = ll_iter_next(&itr)))
  		{
  			//if (item->caid == er->caid && (!er->prid || !item->provid || item->provid == er->prid)) {     //provid check causing problems?
@@ -31495,7 +31608,7 @@ Index: oscam-chk.c
  		}
  	}
  
-@@ -843,7 +1013,7 @@
+@@ -843,7 +1040,7 @@
  		{
  			cs_log_dbg(D_TRACE, "ECM is not in ecmwhitelist of reader %s.", rdr->label);
  			rdr->ecmsfilteredlen += 1;
@@ -31504,7 +31617,7 @@ Index: oscam-chk.c
  		}
  	}
  
-@@ -865,68 +1035,56 @@
+@@ -865,68 +1062,56 @@
  			byteok = 0;
  			entryok = 0;
  			len = 0;
@@ -31586,7 +31699,7 @@ Index: oscam-chk.c
  			}
  		}
  	}
-@@ -940,7 +1098,7 @@
+@@ -940,7 +1125,7 @@
  	{
  		rdr_log_dbg(rdr, D_TRACE, "User (%s) has the same ip (%s) as the reader, blocked because block_same_ip=1!",
  					   username(cur_cl), cs_inet_ntoa(rdr->client->ip));
@@ -31595,7 +31708,7 @@ Index: oscam-chk.c
  	}
  
  	if(cfg.block_same_name && strcmp(username(cur_cl), rdr->label) == 0)
-@@ -947,18 +1105,37 @@
+@@ -947,18 +1132,37 @@
  	{
  		rdr_log_dbg(rdr, D_TRACE, "User (%s) has the same name as the reader, blocked because block_same_name=1!",
  					   username(cur_cl));
@@ -31638,7 +31751,7 @@ Index: oscam-chk.c
  int32_t chk_caid(uint16_t caid, CAIDTAB *ctab)
  {
  	int32_t i;
-@@ -974,12 +1151,10 @@
+@@ -974,12 +1178,10 @@
  
  int32_t chk_caid_rdr(struct s_reader *rdr, uint16_t caid)
  {
@@ -31653,7 +31766,7 @@ Index: oscam-chk.c
  		return 1;
  	}
  	return 0;
-@@ -989,8 +1164,7 @@
+@@ -989,8 +1191,7 @@
  {
  	int32_t caid;
  	caid = chk_caid(er->caid, ctab);
@@ -31663,7 +31776,7 @@ Index: oscam-chk.c
  	er->caid = caid;
  	return 1;
  }
-@@ -1041,15 +1215,21 @@
+@@ -1041,15 +1242,21 @@
  	 }
  
  	 //check for correct cw position
@@ -31691,7 +31804,7 @@ Index: oscam-chk.c
  	 return 0;  //not correct swapped cw
  
    }else
-@@ -1071,12 +1251,105 @@
+@@ -1071,12 +1278,105 @@
  	return 1;
  }
  
@@ -31804,7 +31917,7 @@ Index: oscam-chk.h
 ===================================================================
 --- oscam-chk.h	(revision 10670)
 +++ oscam-chk.h	(working copy)
-@@ -5,9 +5,22 @@
+@@ -5,10 +5,23 @@
  #define SRVID_ZERO  0 // srvid + 0000 (used for service-filter bypass)
  #define SRVID_MASK  1 // srvid + FFFF
  
@@ -31824,10 +31937,12 @@ Index: oscam-chk.h
  uint32_t get_fallbacktimeout(uint16_t caid);
  int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t reader_mode);
 -int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr);
+-
 +int32_t 	matching_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t chkex);
- 
++uint8_t chk_if_ignore_checksum(ECM_REQUEST *er, int8_t disablecrc, FTAB *disablecrc_only_for);
  uint8_t is_localreader(struct s_reader *rdr, ECM_REQUEST *er);
  uint8_t chk_is_fixed_fallback(struct s_reader *rdr, ECM_REQUEST *er);
+ uint8_t chk_has_fixed_fallback(ECM_REQUEST *er);
 @@ -35,6 +48,15 @@
  int8_t is_halfCW_er(ECM_REQUEST *er);
  int8_t chk_halfCW(ECM_REQUEST *er, uchar *cw);
@@ -34056,7 +34171,18 @@ Index: oscam-config-account.c
  #ifdef CS_ANTICASC
  	DEF_OPT_FIXUP_FUNC(account_fixups_fn),
  #endif
-@@ -402,13 +371,12 @@
+@@ -370,7 +339,9 @@
+ 	DEF_OPT_UINT8("cacheex_drop_csp"    , OFS(cacheex.drop_csp),        0),
+ 	DEF_OPT_UINT8("cacheex_allow_request"   , OFS(cacheex.allow_request),   0),
+ 	DEF_OPT_UINT8("no_wait_time"        , OFS(no_wait_time),            0),
+-	DEF_OPT_UINT8("cacheex_allow_filter", OFS(cacheex.allow_filter),    1),	
++	DEF_OPT_UINT8("cacheex_allow_filter", OFS(cacheex.allow_filter),    1),
++	DEF_OPT_UINT8("disablecrccacheex"    ,OFS(disablecrccacheex),       0),
++	DEF_OPT_FUNC_X("disablecrccacheex_only_for", OFS(disablecrccacheex_only_for), ftab_fn, FTAB_ACCOUNT | FTAB_IGNCRCCEX4USERONLYFOR),	
+ #endif
+ #ifdef MODULE_CCCAM
+ 	DEF_OPT_INT32("cccmaxhops"          , OFS(cccmaxhops),              DEFAULT_CC_MAXHOPS),
+@@ -402,13 +373,12 @@
  void chk_account(const char *token, char *value, struct s_auth *account)
  {
  	if(config_list_parse(account_opts, token, value, account))
@@ -34073,7 +34199,7 @@ Index: oscam-config-account.c
  	config_list_set_defaults(account_opts, account);
  }
  
-@@ -416,7 +384,7 @@
+@@ -416,7 +386,7 @@
  {
  	FILE *fp = open_config_file(cs_user);
  	if(!fp)
@@ -34082,7 +34208,7 @@ Index: oscam-config-account.c
  
  	struct s_auth *authptr = NULL;
  	int32_t tag = 0, nr = 0, expired = 0, disabled = 0;
-@@ -424,25 +392,23 @@
+@@ -424,25 +394,23 @@
  	struct s_auth *account = NULL;
  	struct s_auth *probe = NULL;
  	if(!cs_malloc(&token, MAXLINESIZE))
@@ -34115,7 +34241,7 @@ Index: oscam-config-account.c
  
  			account = ptr;
  			account_set_defaults(account);
-@@ -452,20 +418,17 @@
+@@ -452,20 +420,17 @@
  		}
  
  		if(!tag)
@@ -34141,7 +34267,7 @@ Index: oscam-config-account.c
  					fprintf(stderr, "Warning: duplicate account '%s'\n", value);
  					strncat(value, "_x", sizeof(probe->usr) - strlen(value) - 1);
  				}
-@@ -476,12 +439,11 @@
+@@ -476,12 +441,11 @@
  	NULLFREE(token);
  	fclose(fp);
  
@@ -34157,7 +34283,7 @@ Index: oscam-config-account.c
  	}
  	cs_log("userdb reloaded: %d accounts loaded, %d expired, %d disabled", nr, expired, disabled);
  	return authptr;
-@@ -490,8 +452,7 @@
+@@ -490,8 +454,7 @@
  int32_t init_free_userdb(struct s_auth *ptr)
  {
  	int32_t nro;
@@ -34167,7 +34293,7 @@ Index: oscam-config-account.c
  		struct s_auth *ptr_next;
  		ptr_next = ptr->next;
  		ll_destroy(&ptr->aureader_list);
-@@ -516,9 +477,8 @@
+@@ -516,9 +479,8 @@
  	struct s_auth *account;
  	FILE *f = create_config_file(cs_user);
  	if(!f)
@@ -34179,7 +34305,7 @@ Index: oscam-config-account.c
  		fprintf(f, "[account]\n");
  		config_list_apply_fixups(account_opts, account);
  		config_list_save(f, account_opts, account, cfg.http_full_cfg);
-@@ -531,14 +491,12 @@
+@@ -531,14 +493,12 @@
  {
  	struct s_auth *account1, *account2;
  	struct s_auth *new_accounts = init_userdb();
@@ -34327,7 +34453,30 @@ Index: oscam-config-global.c
  		value = mk_t_logfile();
  		fprintf_conf(f, token, "%s\n", value);
  		free_mk_t(value);
-@@ -257,7 +250,7 @@
+@@ -150,6 +143,22 @@
+ 	}
+ }
+ 
++void chk_ftab_fn(const char *token, char *value, void *setting, FILE *f)
++{
++	FTAB *ftab = setting;
++	if(value)
++	{
++		if(strlen(value))
++			chk_ftab(value, ftab);
++		else
++			ftab_clear(ftab);
++		return;
++	}
++	value = mk_t_ftab(ftab);
++	if(strlen(value) > 0 || cfg.http_full_cfg)
++		{ fprintf_conf(f, token, "%s\n", value); }
++	free_mk_t(value);
++}
+ 
+ void caidvaluetab_fn(const char *token, char *value, void *setting, FILE *f)
+ {
+@@ -257,7 +266,7 @@
  	if(!cfg.mailfile) { cfg.disablemail = 1; }
  	if(cfg.ctimeout < 10) { cfg.ctimeout = cfg.ctimeout * 100; } // save always in ms
  
@@ -34336,7 +34485,7 @@ Index: oscam-config-global.c
  	if(cfg.nice != 99)
  	{
  #ifndef __CYGWIN__
-@@ -265,29 +258,20 @@
+@@ -265,29 +274,20 @@
  #else
  		HANDLE WinId;
  		uint32_t wprio;
@@ -34374,7 +34523,7 @@ Index: oscam-config-global.c
  #endif
  }
  
-@@ -294,8 +278,7 @@
+@@ -294,8 +294,7 @@
  #define OFS(X) offsetof(struct s_config, X)
  #define SIZEOF(X) sizeof(((struct s_config *)0)->X)
  
@@ -34384,7 +34533,7 @@ Index: oscam-config-global.c
  	DEF_OPT_FIXUP_FUNC(global_fixups_fn),
  #ifdef LEDSUPPORT
  	DEF_OPT_INT8("enableled"                , OFS(enableled),           0),
-@@ -307,6 +290,9 @@
+@@ -307,6 +306,9 @@
  	DEF_OPT_FUNC("serverip"                 , OFS(srvip),               serverip_fn),
  	DEF_OPT_FUNC("logfile"                  , OFS(logfile),             logfile_fn),
  	DEF_OPT_INT8("logduplicatelines"        , OFS(logduplicatelines),   0),
@@ -34394,7 +34543,16 @@ Index: oscam-config-global.c
  	DEF_OPT_STR("pidfile"                   , OFS(pidfile),             NULL),
  	DEF_OPT_INT8("disableuserfile"          , OFS(disableuserfile),     1),
  	DEF_OPT_INT8("disablemail"              , OFS(disablemail),         1),
-@@ -388,8 +374,7 @@
+@@ -363,6 +365,8 @@
+ 	DEF_OPT_INT32("failbancount"            , OFS(failbancount),        0),
+ 	DEF_OPT_INT8("suppresscmd08"            , OFS(c35_suppresscmd08),   0),
+ 	DEF_OPT_INT8("double_check"             , OFS(double_check),        0),
++	DEF_OPT_INT8("disablecrccws"            , OFS(disablecrccws),            0),
++	DEF_OPT_FUNC("disablecrccws_only_for"   , OFS(disablecrccws_only_for),     chk_ftab_fn),
+ 	DEF_LAST_OPT
+ };
+ 
+@@ -388,8 +392,7 @@
  	return cfg.ac_enabled || cfg.acosc_enabled;
  }
  
@@ -34404,7 +34562,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(anticasc_should_save_fn),
  	DEF_OPT_FIXUP_FUNC(anticasc_fixups_fn),
  	DEF_OPT_INT8("enabled"			, OFS(ac_enabled),		0),
-@@ -418,8 +403,7 @@
+@@ -418,8 +421,7 @@
  	return cfg.mon_port;
  }
  
@@ -34414,7 +34572,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(monitor_should_save_fn),
  	DEF_OPT_INT32("port"		, OFS(mon_port),	0),
  	DEF_OPT_FUNC("serverip"		, OFS(mon_srvip),	serverip_fn),
-@@ -441,20 +425,16 @@
+@@ -441,20 +443,16 @@
  		cfg.http_port = 0;
  		if(value[0])
  		{
@@ -34439,7 +34597,7 @@ Index: oscam-config-global.c
  				cfg.http_port = strtoul(value, NULL, 10);
  			}
  		}
-@@ -470,8 +450,7 @@
+@@ -470,8 +468,7 @@
  	{
  		char *ptr, *saveptr1 = NULL;
  		memset(cfg.http_dyndns, 0, sizeof(cfg.http_dyndns));
@@ -34449,7 +34607,7 @@ Index: oscam-config-global.c
  			trim(ptr);
  			cs_strncpy((char *)cfg.http_dyndns[i], ptr, sizeof(cfg.http_dyndns[i]));
  		}
-@@ -480,10 +459,8 @@
+@@ -480,10 +477,8 @@
  	if(strlen((const char *)(cfg.http_dyndns[0])) > 0 || cfg.http_full_cfg)
  	{
  		fprintf_conf(f, token, "%s", ""); // it should not have \n at the end
@@ -34462,7 +34620,7 @@ Index: oscam-config-global.c
  				fprintf(f, "%s%s", i > 0 ? "," : "", cfg.http_dyndns[i]);
  			}
  		}
-@@ -496,8 +473,7 @@
+@@ -496,8 +491,7 @@
  	return cfg.http_port;
  }
  
@@ -34472,7 +34630,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(webif_should_save_fn),
  	DEF_OPT_FUNC("httpport"                 , OFS(http_port),               http_port_fn),
  	DEF_OPT_FUNC("serverip"                 , OFS(http_srvip),              serverip_fn),
-@@ -531,7 +507,7 @@
+@@ -531,7 +525,7 @@
  	DEF_OPT_FUNC("httpdyndns"               , OFS(http_dyndns),             http_dyndns_fn),
  	DEF_OPT_INT32("aulow"                   , OFS(aulow),                   30),
  	DEF_OPT_INT32("hideclient_to"           , OFS(hideclient_to),           25),
@@ -34481,7 +34639,7 @@ Index: oscam-config-global.c
  	DEF_OPT_INT32("httpemmuclean"           , OFS(http_emmu_clean),         256),
  	DEF_OPT_INT32("httpemmsclean"           , OFS(http_emms_clean),         -1),
  	DEF_OPT_INT32("httpemmgclean"           , OFS(http_emmg_clean),         -1),
-@@ -555,8 +531,7 @@
+@@ -555,8 +549,7 @@
  	return cfg.c33_port;
  }
  
@@ -34491,7 +34649,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(camd33_should_save_fn),
  	DEF_OPT_INT32("port"	, OFS(c33_port),	0),
  	DEF_OPT_FUNC("serverip"	, OFS(c33_srvip),	serverip_fn),
-@@ -572,12 +547,12 @@
+@@ -572,12 +565,12 @@
  
  void cache_fixups_fn(void *UNUSED(var))
  {
@@ -34509,7 +34667,7 @@ Index: oscam-config-global.c
  #endif
  }
  
-@@ -593,8 +568,7 @@
+@@ -593,8 +586,7 @@
  		   ;
  }
  
@@ -34519,7 +34677,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(cache_should_save_fn),
  	DEF_OPT_FIXUP_FUNC(cache_fixups_fn),
  	DEF_OPT_UINT32("delay"			, OFS(delay),			CS_DELAY),
-@@ -632,8 +606,7 @@
+@@ -632,8 +624,7 @@
  	return cfg.c35_port;
  }
  
@@ -34529,7 +34687,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(camd35_should_save_fn),
  	DEF_OPT_INT32("port"		, OFS(c35_port),		0),
  	DEF_OPT_FUNC("serverip"		, OFS(c35_srvip),		serverip_fn),
-@@ -652,12 +625,10 @@
+@@ -652,12 +643,10 @@
  	PTAB *ptab = setting;
  	if(value)
  	{
@@ -34544,7 +34702,7 @@ Index: oscam-config-global.c
  			chk_port_tab(value, ptab);
  		}
  		return;
-@@ -679,8 +650,7 @@
+@@ -679,8 +668,7 @@
  	return cfg.c35_tcp_ptab.nports && cfg.c35_tcp_ptab.ports[0].s_port;
  }
  
@@ -34554,7 +34712,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(cs378x_should_save_fn),
  	DEF_OPT_FUNC_X("port"		, OFS(c35_tcp_ptab),		porttab_fn, PORTTAB_CS378X, .free_value = porttab_free_fn),
  	DEF_OPT_FUNC("serverip"		, OFS(c35_tcp_srvip),		serverip_fn),
-@@ -697,8 +667,7 @@
+@@ -697,8 +685,7 @@
  	return cfg.ncd_ptab.nports && cfg.ncd_ptab.ports[0].s_port;
  }
  
@@ -34564,7 +34722,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(newcamd_should_save_fn),
  	DEF_OPT_FUNC_X("port"		, OFS(ncd_ptab),	porttab_fn, PORTTAB_NEWCAMD, .free_value = porttab_free_fn),
  	DEF_OPT_FUNC("serverip"		, OFS(ncd_srvip),	serverip_fn),
-@@ -724,7 +693,7 @@
+@@ -724,7 +711,7 @@
  		{
  			cfg.cc_port[i] = strtoul(ptr, NULL, 10);
  			if(cfg.cc_port[i])
@@ -34573,7 +34731,7 @@ Index: oscam-config-global.c
  		}
  		return;
  	}
-@@ -738,8 +707,7 @@
+@@ -738,8 +725,7 @@
  	return cfg.cc_port[0];
  }
  
@@ -34583,7 +34741,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(cccam_should_save_fn),
  	DEF_OPT_FUNC("port"			, OFS(cc_port),			cccam_port_fn),
  	DEF_OPT_FUNC("serverip"			, OFS(cc_srvip),		serverip_fn),
-@@ -766,8 +734,7 @@
+@@ -766,8 +752,7 @@
  	return cfg.pand_port;
  }
  
@@ -34593,7 +34751,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(pandora_should_save_fn),
  	DEF_OPT_INT32("pand_port"		, OFS(pand_port),		0),
  	DEF_OPT_FUNC("pand_srvid"		, OFS(pand_srvip),		serverip_fn),
-@@ -804,8 +771,7 @@
+@@ -804,8 +789,7 @@
  	return cfg.rad_port;
  }
  
@@ -34603,7 +34761,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(radegast_should_save_fn),
  	DEF_OPT_INT32("port"	, OFS(rad_port),	0),
  	DEF_OPT_FUNC("serverip"	, OFS(rad_srvip),	serverip_fn),
-@@ -823,8 +789,7 @@
+@@ -823,8 +807,7 @@
  	return cfg.ser_device != NULL;
  }
  
@@ -34613,7 +34771,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(serial_should_save_fn),
  	DEF_OPT_STR("device"	, OFS(ser_device),	NULL),
  	DEF_LAST_OPT
-@@ -906,7 +871,7 @@
+@@ -906,7 +889,7 @@
  #endif
  
  #ifdef HAVE_DVBAPI
@@ -34622,7 +34780,7 @@ Index: oscam-config-global.c
  
  static void dvbapi_boxtype_fn(const char *token, char *value, void *UNUSED(setting), FILE *f)
  {
-@@ -916,8 +881,7 @@
+@@ -916,8 +899,7 @@
  		cfg.dvbapi_boxtype = 0;
  		for(i = 1; i <= BOXTYPES; i++)
  		{
@@ -34632,7 +34790,7 @@ Index: oscam-config-global.c
  				cfg.dvbapi_boxtype = i;
  				break;
  			}
-@@ -924,60 +888,57 @@
+@@ -924,60 +906,57 @@
  		}
  		return;
  	}
@@ -34709,7 +34867,7 @@ Index: oscam-config-global.c
  				p->next = entry;
  			}
  		}
-@@ -990,12 +951,11 @@
+@@ -990,12 +969,11 @@
  	return cfg.dvbapi_enabled;
  }
  
@@ -34725,7 +34883,7 @@ Index: oscam-config-global.c
  	DEF_OPT_INT8("request_mode"	, OFS(dvbapi_requestmode),	0),
  	DEF_OPT_INT32("listen_port"	, OFS(dvbapi_listenport),	0),
  	DEF_OPT_INT32("delayer"		, OFS(dvbapi_delayer),		0),
-@@ -1015,7 +975,7 @@
+@@ -1015,7 +993,7 @@
  #ifdef LCDSUPPORT
  static void lcd_fixups_fn(void *UNUSED(var))
  {
@@ -34734,7 +34892,7 @@ Index: oscam-config-global.c
  }
  
  static bool lcd_should_save_fn(void *UNUSED(var))
-@@ -1023,8 +983,7 @@
+@@ -1023,8 +1001,7 @@
  	return cfg.enablelcd;
  }
  
@@ -34744,7 +34902,7 @@ Index: oscam-config-global.c
  	DEF_OPT_SAVE_FUNC(lcd_should_save_fn),
  	DEF_OPT_FIXUP_FUNC(lcd_fixups_fn),
  	DEF_OPT_INT8("enablelcd"		, OFS(enablelcd),		0),
-@@ -1037,8 +996,7 @@
+@@ -1037,8 +1014,7 @@
  static const struct config_list lcd_opts[] = { DEF_LAST_OPT };
  #endif
  
@@ -34754,7 +34912,15 @@ Index: oscam-config-global.c
  	{ "global",	global_opts }, // *** MUST BE FIRST ***
  	{ "anticasc",	anticasc_opts },
  	{ "cache",	cache_opts },
-@@ -1086,12 +1044,10 @@
+@@ -1069,6 +1045,7 @@
+ 	config_sections_free(oscam_conf, &cfg);
+ 	caidvaluetab_clear(&cfg.ftimeouttab);
+ 	caidtab_clear(&cfg.double_check_caid);
++	ftab_clear(&cfg.disablecrccws_only_for);
+ #ifdef WITH_LB
+ 	caidvaluetab_clear(&cfg.lb_retrylimittab);
+ 	caidvaluetab_clear(&cfg.lb_nbest_readers_tab);
+@@ -1086,12 +1063,10 @@
  {
  	FILE *fp;
  
@@ -34769,15 +34935,17 @@ Index: oscam-config-global.c
  		fp = open_config_file_or_die(cs_conf);
  	}
  
-@@ -1117,11 +1073,17 @@
+@@ -1116,12 +1091,19 @@
+ 		cfg.logtostdout = 1;
  #ifdef HAVE_DVBAPI
  		cfg.dvbapi_enabled = 1;
- #endif
++
 +#ifdef WITH_HISILICON
 +		// Always
 +		cfg.dvbapi_enabled = 1;
 +		cfg.dvbapi_pmtmode = 1;
 +		cfg.dvbapi_boxtype = BOXTYPE_HISILICON;
+ #endif
 +#endif
  		return 0;
  	}
@@ -34788,7 +34956,7 @@ Index: oscam-config-global.c
  
  	int line = 0;
  	int valid_section = 1;
-@@ -1130,28 +1092,25 @@
+@@ -1130,28 +1112,25 @@
  		++line;
  		int len = strlen(trim(token));
  		if(len < 3)  // a=b or [a] are at least 3 chars
@@ -34822,7 +34990,7 @@ Index: oscam-config-global.c
  				fprintf(stderr, "WARNING: %s line %d section [%s] is ignored (support not compiled in).\n",
  						cs_conf, line, newconf->section);
  			}
-@@ -1158,15 +1117,14 @@
+@@ -1158,15 +1137,14 @@
  			continue;
  		}
  		if(!valid_section)
@@ -34841,7 +35009,7 @@ Index: oscam-config-global.c
  			fprintf(stderr, "WARNING: %s line %d section [%s] contains unknown setting '%s=%s'\n",
  					cs_conf, line, cur_section->section, ttoken, tvalue);
  		}
-@@ -1173,7 +1131,24 @@
+@@ -1173,7 +1151,24 @@
  	}
  	NULLFREE(token);
  	fclose(fp);
@@ -34854,7 +35022,7 @@ Index: oscam-config-global.c
 +	}
 +#endif
 +
-+#ifdef WITH_HISILICON
++#if defined(HAVE_DVBAPI) && defined(WITH_HISILICON)
 +	// Always
 +	cfg.dvbapi_enabled = 1;
 +	cfg.dvbapi_pmtmode = 1;
@@ -34867,7 +35035,7 @@ Index: oscam-config-global.c
  	return 0;
  }
  
-@@ -1181,7 +1156,7 @@
+@@ -1181,7 +1176,7 @@
  {
  	FILE *f = create_config_file(cs_conf);
  	if(!f)
@@ -35226,7 +35394,15 @@ Index: oscam-config-reader.c
  			}
  		}
  		return;
-@@ -413,14 +433,13 @@
+@@ -401,6 +421,7 @@
+ 		if(ftab_type & FTAB_CHID)       { rdr = container_of(setting, struct s_reader, fchid); }
+ 		if(ftab_type & FTAB_FBPCAID)    { rdr = container_of(setting, struct s_reader, fallback_percaid); }
+ 		if(ftab_type & FTAB_LOCALCARDS) { rdr = container_of(setting, struct s_reader, localcards); }
++		if(ftab_type & FTAB_IGNCHKSMCAID){ rdr = container_of(setting, struct s_reader, disablecrccws_only_for); }
+ 		if(rdr)
+ 			{ rdr->changes_since_shareupdate = 1; }
+ 	}
+@@ -413,14 +434,13 @@
  static void aeskeys_fn(const char *token, char *value, void *setting, FILE *f)
  {
  	struct s_reader *rdr = setting;
@@ -35243,7 +35419,7 @@ Index: oscam-config-reader.c
  	free_mk_t(value);
  }
  
-@@ -427,8 +446,7 @@
+@@ -427,8 +447,7 @@
  static void emmcache_fn(const char *token, char *value, void *setting, FILE *f)
  {
  	struct s_reader *rdr = setting;
@@ -35253,7 +35429,7 @@ Index: oscam-config-reader.c
  		rdr->cachemm   = 0;
  		rdr->rewritemm = 0;
  		rdr->logemm    = 0;
-@@ -493,18 +511,17 @@
+@@ -493,18 +512,17 @@
  				ptr = strtok_r(NULL, ",", &saveptr1))
  		{
  			if(!cs_malloc(&blocklen, sizeof(*blocklen)))
@@ -35276,7 +35452,7 @@ Index: oscam-config-reader.c
  			ll_append(rdr->blockemmbylen, blocklen);
  		}
  		return;
-@@ -511,7 +528,7 @@
+@@ -511,7 +529,7 @@
  	}
  	value = mk_t_emmbylen(rdr);
  	if(strlen(value) > 0 || cfg.http_full_cfg)
@@ -35285,7 +35461,7 @@ Index: oscam-config-reader.c
  	free_mk_t(value);
  }
  
-@@ -518,24 +535,19 @@
+@@ -518,24 +536,19 @@
  static void nano_fn(const char *token, char *value, void *setting, FILE *f)
  {
  	uint16_t *nano = setting;
@@ -35316,7 +35492,7 @@ Index: oscam-config-reader.c
  				}
  			}
  		}
-@@ -543,7 +555,7 @@
+@@ -543,7 +556,7 @@
  	}
  	value = mk_t_nano(*nano);
  	if(strlen(value) > 0 || cfg.http_full_cfg)
@@ -35325,7 +35501,7 @@ Index: oscam-config-reader.c
  	free_mk_t(value);
  }
  
-@@ -550,31 +562,27 @@
+@@ -550,31 +563,27 @@
  static void auprovid_fn(const char *token, char *value, void *setting, FILE *f)
  {
  	struct s_reader *rdr = setting;
@@ -35364,7 +35540,7 @@ Index: oscam-config-reader.c
  				rdr->rlecmh[i].srvid = -1;
  				rdr->rlecmh[i].last.time = -1;
  			}
-@@ -582,30 +590,25 @@
+@@ -582,30 +591,25 @@
  		return;
  	}
  	if(rdr->ratelimitecm || cfg.http_full_cfg)
@@ -35401,7 +35577,7 @@ Index: oscam-config-reader.c
  			rdr->ratelimittime = atoi(value);
  			if (rdr->ratelimittime < 60) rdr->ratelimittime *=1000;
  		}
-@@ -612,8 +615,9 @@
+@@ -612,8 +616,9 @@
  		return;
  	}
  	if(rdr->ratelimitecm || cfg.http_full_cfg)
@@ -35412,7 +35588,7 @@ Index: oscam-config-reader.c
  static void srvidholdtime_fn(const char *token, char *value, void *setting, FILE *f)
  {
  	struct s_reader *rdr = setting;
-@@ -647,21 +651,17 @@
+@@ -647,21 +652,17 @@
  	struct s_reader *rdr = setting;
  	if(value)
  	{
@@ -35438,7 +35614,7 @@ Index: oscam-config-reader.c
  				fprintf(stderr, "cooldown must have 2 positive values (x,y) set values %d,%d ! cooldown deactivated\n",
  						rdr->cooldown[0], rdr->cooldown[1]);
  				rdr->cooldown[0] = 0;
-@@ -670,8 +670,7 @@
+@@ -670,8 +671,7 @@
  		}
  		return;
  	}
@@ -35448,7 +35624,7 @@ Index: oscam-config-reader.c
  		fprintf_conf(f, token, "%d,%d\n", rdr->cooldown[0], rdr->cooldown[1]);
  	}
  }
-@@ -679,8 +678,7 @@
+@@ -679,8 +679,7 @@
  static void cooldowndelay_fn(const char *UNUSED(token), char *value, void *setting, FILE *UNUSED(f))
  {
  	struct s_reader *rdr = setting;
@@ -35458,7 +35634,7 @@ Index: oscam-config-reader.c
  		rdr->cooldown[0] = strlen(value) ? atoi(value) : 0;
  	}
  	// This option is *not* written in the config file.
-@@ -690,15 +688,12 @@
+@@ -690,15 +689,12 @@
  static void cooldowntime_fn(const char *UNUSED(token), char *value, void *setting, FILE *UNUSED(f))
  {
  	struct s_reader *rdr = setting;
@@ -35477,7 +35653,7 @@ Index: oscam-config-reader.c
  			rdr->cooldown[1] = atoi(value);
  		}
  		return;
-@@ -748,6 +743,9 @@
+@@ -748,6 +744,9 @@
  	DEF_OPT_SSTR("user"                 , OFS(r_usr),                   "", SIZEOF(r_usr)),
  	DEF_OPT_SSTR("password"             , OFS(r_pwd),                   "", SIZEOF(r_pwd)),
  	DEF_OPT_SSTR("pincode"              , OFS(pincode),                 "none", SIZEOF(pincode)),
@@ -35487,7 +35663,15 @@ Index: oscam-config-reader.c
  #ifdef MODULE_GBOX
  	DEF_OPT_UINT8("gbox_max_distance"	, OFS(gbox_maxdist),		DEFAULT_GBOX_MAX_DIST),
  	DEF_OPT_UINT8("gbox_max_ecm_send"	, OFS(gbox_maxecmsend),		DEFAULT_GBOX_MAX_ECM_SEND),
-@@ -828,6 +826,12 @@
+@@ -770,6 +769,7 @@
+ 	DEF_OPT_INT8("fallback"             , OFS(fallback),                0),
+ 	DEF_OPT_FUNC_X("fallback_percaid"   , OFS(fallback_percaid),        ftab_fn, FTAB_READER | FTAB_FBPCAID),
+ 	DEF_OPT_FUNC_X("localcards"         , OFS(localcards),        		ftab_fn, FTAB_READER | FTAB_LOCALCARDS),
++	DEF_OPT_FUNC_X("disablecrccws_only_for", OFS(disablecrccws_only_for),     ftab_fn, FTAB_READER | FTAB_IGNCHKSMCAID),
+ #ifdef CS_CACHEEX
+ 	DEF_OPT_INT8("cacheex"              , OFS(cacheex.mode),            0),
+ 	DEF_OPT_INT8("cacheex_maxhop"       , OFS(cacheex.maxhop),          0),
+@@ -828,6 +828,12 @@
  #ifdef MODULE_PANDORA
  	DEF_OPT_UINT8("pand_send_ecm"       , OFS(pand_send_ecm),           0),
  #endif
@@ -35500,7 +35684,7 @@ Index: oscam-config-reader.c
  #ifdef MODULE_CCCAM
  	DEF_OPT_SSTR("cccversion"           , OFS(cc_version),              "", SIZEOF(cc_version)),
  	DEF_OPT_INT8("cccmaxhops"           , OFS(cc_maxhops),              DEFAULT_CC_MAXHOPS),
-@@ -856,13 +860,46 @@
+@@ -856,13 +862,46 @@
  	DEF_LAST_OPT
  };
  
@@ -35550,7 +35734,7 @@ Index: oscam-config-reader.c
  	}
  	return false;
  }
-@@ -888,50 +925,53 @@
+@@ -888,50 +927,53 @@
  		"user", "inactivitytimeout", "reconnecttimeout",
  		0
  	};
@@ -35622,7 +35806,7 @@ Index: oscam-config-reader.c
  		return false;
  	}
  #endif
-@@ -939,7 +979,7 @@
+@@ -939,7 +981,7 @@
  #ifdef MODULE_PANDORA
  	// Special settings for PANDORA
  	if(reader->typ != R_PANDORA && streq(setting, "pand_send_ecm"))
@@ -35631,7 +35815,7 @@ Index: oscam-config-reader.c
  #endif
  
  	return true; // Write the setting
-@@ -948,12 +988,19 @@
+@@ -948,12 +990,19 @@
  
  void chk_reader(char *token, char *value, struct s_reader *rdr)
  {
@@ -35655,7 +35839,7 @@ Index: oscam-config-reader.c
  void reader_set_defaults(struct s_reader *rdr)
  {
  	config_list_set_defaults(reader_opts, rdr);
-@@ -964,19 +1011,22 @@
+@@ -964,19 +1013,22 @@
  	configured_readers = ll_create("configured_readers");
  
  	FILE *fp = open_config_file(cs_srvr);
@@ -35685,7 +35869,7 @@ Index: oscam-config-reader.c
  		return 1;
  	}
  
-@@ -984,29 +1034,25 @@
+@@ -984,29 +1036,25 @@
  	while(fgets(token, MAXLINESIZE, fp))
  	{
  		int32_t l;
@@ -35721,7 +35905,7 @@ Index: oscam-config-reader.c
  		*value++ = '\0';
  		chk_reader(trim(strtolower(token)), trim(value), rdr);
  	}
-@@ -1021,6 +1067,132 @@
+@@ -1021,6 +1069,132 @@
  	return (0);
  }
  
@@ -35854,7 +36038,7 @@ Index: oscam-config-reader.c
  void free_reader(struct s_reader *rdr)
  {
  	NULLFREE(rdr->emmfile);
-@@ -1040,6 +1212,8 @@
+@@ -1040,6 +1214,8 @@
  	cs_clear_entitlement(rdr);
  	ll_destroy(&rdr->ll_entitlements);
  
@@ -35863,7 +36047,7 @@ Index: oscam-config-reader.c
  	if(rdr->csystem && rdr->csystem->card_done)
  		rdr->csystem->card_done(rdr);
  	NULLFREE(rdr->csystem_data);
-@@ -1059,8 +1233,7 @@
+@@ -1059,8 +1235,7 @@
  	int count = 0;
  	struct s_reader *rdr;
  	LL_ITER itr = ll_iter_create(configured_readers);
@@ -35873,7 +36057,7 @@ Index: oscam-config-reader.c
  		free_reader(rdr);
  		count++;
  	}
-@@ -1069,17 +1242,41 @@
+@@ -1069,17 +1244,41 @@
  	return count;
  }
  
@@ -35919,7 +36103,7 @@ Index: oscam-config-reader.c
  			fprintf(f, "[reader]\n");
  			config_list_apply_fixups(reader_opts, rdr);
  			config_list_save_ex(f, reader_opts, rdr, cfg.http_full_cfg, reader_check_setting);
-@@ -1092,6 +1289,8 @@
+@@ -1092,6 +1291,8 @@
  void reload_readerdb(void)
  {
  	struct s_reader *rdr;
@@ -36860,6 +37044,17 @@ Index: oscam-config.h
  
  void    chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
  int32_t init_sidtab(void);
+@@ -54,7 +61,9 @@
+ 	FTAB_PROVID  = 0x04,
+ 	FTAB_CHID    = 0x08,
+ 	FTAB_FBPCAID = 0x10,
+-	FTAB_LOCALCARDS = 0x20
++	FTAB_LOCALCARDS = 0x20,
++	FTAB_IGNCHKSMCAID = 0x40,
++	FTAB_IGNCRCCEX4USERONLYFOR = 0x80
+ };
+ 
+ void ftab_fn(const char *token, char *value, void *setting, long ftab_type, FILE *f);
 Index: oscam-ecm.c
 ===================================================================
 --- oscam-ecm.c	(revision 10670)
@@ -37861,18 +38056,33 @@ Index: oscam-ecm.c
  		cs_log_dbg(D_READER, "Reader %s already answer, skip this ecm answer!", reader ? reader->label : "-");
  		cs_writeunlock(&ea->ecmanswer_lock);
  		return 0;
-@@ -1576,7 +1732,9 @@
+@@ -1576,11 +1732,24 @@
  
  	if(reader && cw && rc < E_NOTFOUND)
  	{
 -		if(reader->disablecrccws == 0)
 +		mycs_trace(D_ADB, "myecm:--- ecm.dcw{%02x...%02x, %02x...%02x}(%d)", cw[0],cw[7], cw[8],cw[15], er->cwdesalgo);
 +		// sky(2016,powervu)
-+		if (!er->cwdesalgo && reader->disablecrccws == 0)
++		//if (!er->cwdesalgo && reader->disablecrccws == 0)
++		if(cfg.disablecrccws == 0 && reader->disablecrccws == 0)
  		{
++
++			uint8_t selectedForIgnChecksum = chk_if_ignore_checksum(er, cfg.disablecrccws, &cfg.disablecrccws_only_for)
++					+ chk_if_ignore_checksum(er, reader->disablecrccws, &reader->disablecrccws_only_for);
++
  			for(i = 0; i < 16; i += 4)
  			{
-@@ -1628,6 +1786,12 @@
+ 				c = ((cw[i] + cw[i + 1] + cw[i + 2]) & 0xff);
++
++				if((i!=12) && selectedForIgnChecksum && (cw[i + 3] != c)){
++					cs_log_dbg(D_TRACE, "notice: CW checksum check disabled for %04X:%06X", er->caid, er->prid);
++					break;
++				}
++
+ 				if(cw[i + 3] != c)
+ 				{
+ 					unsigned char nano = 0x00;
+@@ -1628,6 +1797,12 @@
  #ifdef CW_CYCLE_CHECK
  	uint8_t cwc_ct = er->cwc_cycletime > 0 ? er->cwc_cycletime : 0;
  	uint8_t cwc_ncwc = er->cwc_next_cw_cycle < 2 ? er->cwc_next_cw_cycle : 2;
@@ -37885,7 +38095,7 @@ Index: oscam-ecm.c
  	if(!checkcwcycle(er->client, er, reader, cw, rc, cwc_ct, cwc_ncwc))
  	{
  		rc = E_NOTFOUND;
-@@ -1634,19 +1798,21 @@
+@@ -1634,19 +1809,21 @@
  		rcEx = E2_WRONG_CHKSUM;
  		cs_log_dbg(D_CACHEEX | D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [write_ecm_answer] cyclecheck failed! Reader: %s set rc: %i", (er->client ? er->client->account->usr : "-"), er->caid, er->srvid, reader ? reader->label : "-", rc);
  	}
@@ -37913,7 +38123,7 @@ Index: oscam-ecm.c
  	cs_writeunlock(&ea->ecmanswer_lock);
  
  	struct timeb tpe;
-@@ -1658,22 +1824,21 @@
+@@ -1658,22 +1835,21 @@
  	//send ea for ecm request
  	int32_t res = 0;
  	struct s_client *cl = er->client;
@@ -37941,7 +38151,7 @@ Index: oscam-ecm.c
  
  		//readers stats for LB
  		send_reader_stat(reader, er, ea, ea->rc);
-@@ -1686,14 +1851,19 @@
+@@ -1686,14 +1862,19 @@
  		//Update reader stats:
  		if(ea->rc == E_FOUND)
  		{
@@ -37966,7 +38176,7 @@ Index: oscam-ecm.c
  				eacl->cwcacheexgot++;
  				cacheex_add_stats(eacl, ea->er->caid, ea->er->srvid, ea->er->prid, 1);
  				first_client->cwcacheexgot++;
-@@ -1700,9 +1870,13 @@
+@@ -1700,9 +1881,13 @@
  			}
  #endif
  		}
@@ -37982,7 +38192,7 @@ Index: oscam-ecm.c
  			if(reader->ecmnotfoundlimit && reader->ecmsnok >= reader->ecmnotfoundlimit)
  			{
  				rdr_log(reader, "ECM not found limit reached %u. Restarting the reader.",
-@@ -1709,13 +1883,13 @@
+@@ -1709,13 +1894,13 @@
  						reader->ecmsnok);
  				reader->ecmsnok = 0; // Reset the variable
  				reader->ecmshealthnok = 0; // Reset the variable
@@ -37998,7 +38208,7 @@ Index: oscam-ecm.c
  			reader->ecmshealthok = ((double) reader->ecmsok / (reader->ecmsok + reader->ecmsnok)) * 100;
  			reader->ecmshealthnok = ((double) reader->ecmsnok / (reader->ecmsok + reader->ecmsnok)) * 100;
  		}
-@@ -1723,6 +1897,11 @@
+@@ -1723,6 +1908,11 @@
  		if(rc == E_FOUND && reader->resetcycle > 0)
  		{
  			reader->resetcounter++;
@@ -38010,7 +38220,7 @@ Index: oscam-ecm.c
  			if(reader->resetcounter > reader->resetcycle)
  			{
  				reader->resetcounter = 0;
-@@ -1741,18 +1920,37 @@
+@@ -1741,18 +1931,37 @@
  	uint16_t last_hope = 0;
  
  	// viaccess - check by provid-search
@@ -38055,7 +38265,7 @@ Index: oscam-ecm.c
  
  	// is cryptoworks, but which caid ?
  	if((er->ecm[3] == 0x81) && (er->ecm[4] == 0xFF) &&
-@@ -1762,22 +1960,42 @@
+@@ -1762,22 +1971,42 @@
  	}
  
  	if(!er->caid && er->ecm[2] == 0x31 && er->ecm[0x0b] == 0x28)
@@ -38103,7 +38313,7 @@ Index: oscam-ecm.c
  
  	uint32_t id = 0;
  	switch(er->caid >> 8)
-@@ -1798,6 +2016,10 @@
+@@ -1798,6 +2027,10 @@
  		if(!caid_is_bulcrypt(er->caid))
  			{ id = b2i(2, er->ecm + 6); }
  		break;
@@ -38114,7 +38324,7 @@ Index: oscam-ecm.c
  	}
  	return id;
  }
-@@ -1849,14 +2071,13 @@
+@@ -1849,14 +2082,13 @@
  	{
  #ifdef CS_CACHEEX
  		if(ecm->cacheex_src)      //from cacheex or csp
@@ -38131,7 +38341,7 @@ Index: oscam-ecm.c
  		er->selected_reader = ecm->selected_reader;
  		er->cw_count = ecm->cw_count;
  
-@@ -1865,7 +2086,8 @@
+@@ -1865,7 +2097,8 @@
  			er->cacheex_src = ecm->cacheex_src;
  			er->cwc_cycletime = ecm->cwc_cycletime;
  			er->cwc_next_cw_cycle = ecm->cwc_next_cw_cycle;
@@ -38141,7 +38351,7 @@ Index: oscam-ecm.c
  			er->cacheex_src = NULL;
  	    }
  
-@@ -1890,15 +2112,17 @@
+@@ -1890,15 +2123,17 @@
  
  		if(rc_orig == E_UNHANDLED)
  		{
@@ -38162,7 +38372,7 @@ Index: oscam-ecm.c
  	cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] NEW REQUEST!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
  	increment_n_request(client);
  
-@@ -1906,10 +2130,11 @@
+@@ -1906,10 +2141,11 @@
  	time_t now = time((time_t *)0);
  	uint32_t line = 0;
  
@@ -38175,7 +38385,7 @@ Index: oscam-ecm.c
  	client->lastecm = now;
  
  	if(client == first_client || !client ->account || client->account == first_client->account)
-@@ -1939,9 +2164,9 @@
+@@ -1939,9 +2175,9 @@
  	}
  
  
@@ -38188,7 +38398,7 @@ Index: oscam-ecm.c
  	/* Quickfix Area */
  
  	// add chid for all client requests as in module stat
-@@ -1963,12 +2188,10 @@
+@@ -1963,12 +2199,10 @@
  	//betacrypt ecm with nagra header
  	if(chk_is_betatunnel_caid(er->caid) == 1 && (er->ecmlen == 0x89 || er->ecmlen == 0x4A) && er->ecm[3] == 0x07 && (er->ecm[4] == 0x84 || er->ecm[4] == 0x45))
  	{
@@ -38203,7 +38413,7 @@ Index: oscam-ecm.c
  			check_lb_auto_betatunnel_mode(er);
  		}
  		cs_log_dbg(D_TRACE, "Quickfix remap beta->nagra: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->ecmlen, er->ecm[3], er->ecm[4]);
-@@ -1977,12 +2200,10 @@
+@@ -1977,12 +2211,10 @@
  	//nagra ecm with betacrypt header 1801, 1833, 1834, 1835
  	if(chk_is_betatunnel_caid(er->caid) == 2 && (er->ecmlen == 0x93 || er->ecmlen == 0x54) && er->ecm[13] == 0x07 && (er->ecm[14] == 0x84 || er->ecm[14] == 0x45))
  	{
@@ -38218,7 +38428,7 @@ Index: oscam-ecm.c
  			er->caid = 0x1722;
  		}
  		cs_log_dbg(D_TRACE, "Quickfix remap nagra->beta: 0x%X, 0x%X, 0x%X, 0x%X", er->caid, er->ecmlen, er->ecm[13], er->ecm[44]);
-@@ -1990,18 +2211,15 @@
+@@ -1990,18 +2222,15 @@
  
  	//Ariva quickfix (invalid nagra provider)
  	if(((er->caid & 0xFF00) == 0x1800) && er->prid > 0x00FFFF)
@@ -38242,7 +38452,7 @@ Index: oscam-ecm.c
  			cs_log_dbg(D_TRACE, "provider fixed: %04X:%06X to %04X:%06X", er->caid, er->prid, er->caid, prid);
  			er->prid = prid;
  		}
-@@ -2009,17 +2227,15 @@
+@@ -2009,17 +2238,15 @@
  
  #ifdef MODULE_NEWCAMD
  	// Set providerid for newcamd clients if none is given
@@ -38263,7 +38473,7 @@ Index: oscam-ecm.c
  		er->rc = E_INVALID;
  		er->rcEx = E2_CAID;
  		snprintf(er->msglog, MSGLOGSIZE, "CAID not supported or found");
-@@ -2027,7 +2243,7 @@
+@@ -2027,7 +2254,7 @@
  
  	// user expired
  	if(client->expirationdate && client->expirationdate < client->lastecm)
@@ -38272,7 +38482,7 @@ Index: oscam-ecm.c
  
  	// out of timeframe
  	if(client->allowedtimeframe[0] && client->allowedtimeframe[1])
-@@ -2045,10 +2261,8 @@
+@@ -2045,10 +2272,8 @@
  	}
  
  	// user disabled
@@ -38285,7 +38495,7 @@ Index: oscam-ecm.c
  			cs_add_violation(client, client->account->usr);
  			cs_disconnect_client(client);
  		}
-@@ -2055,8 +2269,7 @@
+@@ -2055,8 +2280,7 @@
  		er->rc = E_DISABLED;
  	}
  
@@ -38295,7 +38505,7 @@ Index: oscam-ecm.c
  		debug_ecm(D_TRACE, "whitelist filtered: %s (%s) line %d", username(client), buf, line);
  		er->rc = E_INVALID;
  	}
-@@ -2079,7 +2292,7 @@
+@@ -2079,7 +2303,7 @@
  		if(i != client->last_srvid || !client->lastswitch)
  		{
  			if(cfg.usrfileflag)
@@ -38304,7 +38514,7 @@ Index: oscam-ecm.c
  			client->lastswitch = now;
  		}
  
-@@ -2086,17 +2299,14 @@
+@@ -2086,17 +2310,14 @@
  		// user sleeping
  		if(client->tosleep && (now - client->lastswitch > client->tosleep))
  		{
@@ -38325,7 +38535,7 @@ Index: oscam-ecm.c
  				er->rc = E_SLEEPING;
  			}
  		}
-@@ -2108,17 +2318,15 @@
+@@ -2108,17 +2329,15 @@
  
  		for(j = 0; (j < 6) && (er->rc >= E_UNHANDLED); j++)
  		{
@@ -38346,7 +38556,7 @@ Index: oscam-ecm.c
  					er->rc = E_INVALID;
  					er->rcEx = E2_CAID;
  					snprintf(er->msglog, MSGLOGSIZE, "invalid caid 0x%04X", er->caid);
-@@ -2127,10 +2335,8 @@
+@@ -2127,10 +2346,8 @@
  			case 2:
  				// invalid (srvid)
  				// matching srvids (or 0000) specified in betatunnel will bypass this filter
@@ -38359,7 +38569,7 @@ Index: oscam-ecm.c
  						er->rc = E_INVALID;
  						snprintf(er->msglog, MSGLOGSIZE, "invalid SID");
  					}
-@@ -2139,24 +2345,23 @@
+@@ -2139,24 +2356,23 @@
  			case 3:
  				// invalid (ufilters)
  				if(!chk_ufilters(er))
@@ -38388,7 +38598,7 @@ Index: oscam-ecm.c
  				}
  				break;
  			}
-@@ -2170,11 +2375,10 @@
+@@ -2170,11 +2386,10 @@
  	}
  
  	//not continue, send rc to client
@@ -38403,7 +38613,7 @@ Index: oscam-ecm.c
  	}
  
  
-@@ -2223,8 +2427,8 @@
+@@ -2223,8 +2438,8 @@
  		if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
  		{
  			NULLFREE(ecm);
@@ -38414,7 +38624,7 @@ Index: oscam-ecm.c
  		}
  
  		wfc->er_new = er;
-@@ -2232,9 +2436,9 @@
+@@ -2232,9 +2447,9 @@
  		write_ecm_answer_fromcache(wfc);
  		NULLFREE(wfc);
  		NULLFREE(ecm);
@@ -38426,7 +38636,7 @@ Index: oscam-ecm.c
  	}
  
  
-@@ -2254,6 +2458,11 @@
+@@ -2254,6 +2469,11 @@
  
  	struct s_ecm_answer *ea, *prv = NULL;
  	struct s_reader *rdr;
@@ -38438,7 +38648,7 @@ Index: oscam-ecm.c
  
  	cs_readlock(&readerlist_lock);
  	cs_readlock(&clientlist_lock);
-@@ -2261,7 +2470,7 @@
+@@ -2261,7 +2481,7 @@
  	for(rdr = first_active_reader; rdr; rdr = rdr->next)
  	{
  		uint8_t is_fallback = chk_is_fixed_fallback(rdr, er);
@@ -38447,7 +38657,7 @@ Index: oscam-ecm.c
  
  		if(!match) // if this reader does not match, check betatunnel for it
  			match = lb_check_auto_betatunnel(er, rdr);
-@@ -2274,10 +2483,22 @@
+@@ -2274,10 +2494,22 @@
  			if(cacheex == 1 && !cacheex_reader(rdr))  //ex1-cl only ask ex1-rdr
  				{ continue; }
  #endif
@@ -38472,7 +38682,7 @@ Index: oscam-ecm.c
  			er->readers++;
  
  			ea->reader = rdr;
-@@ -2284,9 +2505,9 @@
+@@ -2284,9 +2516,9 @@
  			ea->er = er;
  			ea->rc = E_UNHANDLED;
  			if(prv)
@@ -38484,7 +38694,7 @@ Index: oscam-ecm.c
  			prv = ea;
  
  			ea->status = READER_ACTIVE;
-@@ -2341,15 +2562,23 @@
+@@ -2341,15 +2573,23 @@
  			 * If readers, we have to wait cws generating by normal clients asking normal readers and answers by ex1-rdr (cannot use hitcache).
  			 * If no readers, use hitcache for calculating wait_time.
  			 */
@@ -38515,7 +38725,7 @@ Index: oscam-ecm.c
  	//END WAIT_TIME calculation
  
  	if(!cacheex_wait_time && (er->reader_count + er->fallback_reader_count) == 0)
-@@ -2358,15 +2587,34 @@
+@@ -2358,15 +2598,34 @@
  #endif
  	{
  		er->rc = E_NOTFOUND;
@@ -38555,7 +38765,7 @@ Index: oscam-ecm.c
  
  	//insert it in ecmcwcache!
  	cs_writelock(&ecmcache_lock);
-@@ -2397,12 +2645,12 @@
+@@ -2397,12 +2656,12 @@
  	}
  	else
  #endif
@@ -38571,7 +38781,7 @@ Index: oscam-ecm.c
  		char buf[ECM_FMT_LEN];
  		format_ecm(er, buf, ECM_FMT_LEN);
  		cs_log_dump_dbg(D_CLIENTECM, er->ecm, er->ecmlen, "Client %s ECM dump %s", username(client), buf);
-@@ -2410,6 +2658,7 @@
+@@ -2410,6 +2669,7 @@
  #endif
  
  	cw_process_thread_wakeup();
@@ -38579,7 +38789,7 @@ Index: oscam-ecm.c
  }
  
  
-@@ -2416,95 +2665,50 @@
+@@ -2416,95 +2676,50 @@
  int32_t ecmfmt(uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, char *result, size_t size, uint16_t origin_peer, uint8_t distance)
  {
  	if(!cfg.ecmfmt)
@@ -50968,6 +51178,25 @@ Index: webif/api.xml/mystatus.xml
 +	<log><![CDATA[
 +   ##LOGHISTORY##
 +	]]></log>
+Index: webif/config/global.html
+===================================================================
+--- webif/config/global.html	(revision 10670)
++++ webif/config/global.html	(working copy)
+@@ -27,6 +27,14 @@
+ 					<input name="dropdups" value="0" type="hidden"><input name="dropdups" value="1" type="checkbox" ##DROPDUPSCHECKED##><label></label>
+ 				</TD>
+ 			</TR>
++			<TR><TD><A>Skip CWs checksum test:</A></TD>
++				<TD>
++					<input name="disablecrccws" type="hidden" value="0"><input name="disablecrccws" type="checkbox" value="1" ##DISABLECRCCWSCHECKEDGLOBAL##>
++				</TD>
++			</TR>
++			<TR><TD><A>Skip CWs checksum test only for:</A></TD><TD><textarea name="disablecrccws_only_for" rows="3" class="bt">##IGNCHKSUMONLYFORGLOBAL##</textarea>
++				</TD>
++			</TR>
+ 			<TR><TH COLSPAN="2">Logging</TH></TR>
+ 			<TR><TD><A>Usr file:</A></TD>
+ 				<TD>
 Index: webif/config/menu_webif.html
 ===================================================================
 --- webif/config/menu_webif.html	(nonexistent)
@@ -51064,6 +51293,18 @@ Index: webif/pages_index.txt
  CACHEEXINFOBIT                status/status_cacheexinfo.html                              CS_CACHEEX
  CLIENTHEADLINE                status/status_cheadline.html
  CLIENTHEADLINEADD             status/status_cheadlineadd.html
+Index: webif/readerconfig/readerconfig.html
+===================================================================
+--- webif/readerconfig/readerconfig.html	(revision 10670)
++++ webif/readerconfig/readerconfig.html	(working copy)
+@@ -43,6 +43,7 @@
+ 			<TR><TD><A>ECM HeaderWhitelist:</A></TD><TD><textarea name="ecmheaderwhitelist" rows="2" class="bt">##ECMHEADERWHITELIST##</textarea></TD></TR>
+ 			<TR><TD><A>Drop CWs with wrong checksum:</A><input name="dropbadcws" type="hidden" value="0"></TD><TD><input name="dropbadcws" type="checkbox" value="1" ##DROPBADCWSCHECKED##><label></label></TD></TR>
+ 			<TR><TD><A>Skip CWs checksum test:</A><input name="disablecrccws" type="hidden" value="0"></TD><TD><input name="disablecrccws" type="checkbox" value="1" ##DISABLECRCCWSCHECKED##><label></label></TD></TR>
++			<TR><TD><A>Skip CWs checksum test only for:</A></TD><TD><textarea name="disablecrccws_only_for" rows="3" class="bt">##IGN_CHKSUM_ONLYFOR##</textarea></TD></TR>
+ 			<TR><TD><A>Emmcache:</A></TD><TD><input name="emmcache" class="medium" type="text" maxlength="10" value="##EMMCACHE##"></TD></TR>
+ 			<TR><TD><A data-p="saveemm-u">Saveemm:</A></TD>
+ 				<TD CLASS="invisible">
 Index: webif/readerconfig/readerconfig_ncdavatarbit.html
 ===================================================================
 --- webif/readerconfig/readerconfig_ncdavatarbit.html	(nonexistent)
