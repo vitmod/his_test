@@ -19,7 +19,7 @@ export HISDK_LIBRARY=$dir/u5sdk/lib
 ############
 oscam_new(){
 SVN_REVISION=$(date +"%m%d-%H%M%S")
-[ ! -e $sources/oscam_new_test ] && svn co -r 1587 https://github.com/oscam-emu/oscam-patched/trunk oscam_new_test;
+[ ! -e $sources/oscam_new_test ] && svn co -r 1604 https://github.com/oscam-emu/oscam-patched/trunk oscam_new_test;
 cd $sources/oscam_new_test
 [ ! -e $sources/oscam_new_test/module-dvbapi-his.c ] && patch -p0 < $dir/patches/sky_new_test.patch;
 make clean

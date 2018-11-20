@@ -1,6 +1,6 @@
 Index: Makefile
 ===================================================================
---- Makefile	(revision 1587)
+--- Makefile	(revision 1604)
 +++ Makefile	(working copy)
 @@ -170,6 +170,7 @@
  $(eval $(call prepare_use_flags,COOLAPI2,coolapi2))
@@ -44,7 +44,7 @@ Index: Makefile
     Build OSCam for ARM with MCA support:\n\
 Index: Makefile.extra
 ===================================================================
---- Makefile.extra	(revision 1587)
+--- Makefile.extra	(revision 1604)
 +++ Makefile.extra	(working copy)
 @@ -294,6 +294,14 @@
  		CROSS=arm-linux-androideabi- \
@@ -63,7 +63,7 @@ Index: Makefile.extra
  		LIB_DL= STRIP=true \
 Index: config.h
 ===================================================================
---- config.h	(revision 1587)
+--- config.h	(revision 1604)
 +++ config.h	(working copy)
 @@ -12,7 +12,7 @@
  #endif
@@ -76,7 +76,7 @@ Index: config.h
  #define WITH_DEBUG 1
 Index: config.sh
 ===================================================================
---- config.sh	(revision 1587)
+--- config.sh	(revision 1604)
 +++ config.sh	(working copy)
 @@ -311,6 +311,7 @@
  	have_flag USE_COOLAPI && echo "CONFIG_WITH_COOLAPI=y" || echo "# CONFIG_WITH_COOLAPI=n"
@@ -102,7 +102,7 @@ Index: config.sh
  	'-O'|'--detect-osx-sdk-version')
 Index: globals.h
 ===================================================================
---- globals.h	(revision 1587)
+--- globals.h	(revision 1604)
 +++ globals.h	(working copy)
 @@ -593,6 +593,8 @@
  
@@ -1328,7 +1328,7 @@ Index: module-dvbapi-his.h
 +#endif
 Index: module-dvbapi.c
 ===================================================================
---- module-dvbapi.c	(revision 1587)
+--- module-dvbapi.c	(revision 1604)
 +++ module-dvbapi.c	(working copy)
 @@ -11,6 +11,9 @@
  #include "module-dvbapi-coolapi.h"
@@ -1559,7 +1559,7 @@ Index: module-dvbapi.c
  
  	return listenfd;
  }
-@@ -4854,6 +4920,7 @@
+@@ -4852,6 +4918,7 @@
  	{
  		case DVBAPI_FILTER_DATA: // min 9 bytes
  		{
@@ -1567,7 +1567,7 @@ Index: module-dvbapi.c
  			if(mbuf_len < 9)
  			{
  				return 9 - mbuf_len;
-@@ -4862,6 +4929,7 @@
+@@ -4860,6 +4927,7 @@
  		}
  		case DVBAPI_CLIENT_INFO: // min 7 bytes
  		{
@@ -1575,7 +1575,7 @@ Index: module-dvbapi.c
  			if(mbuf_len < 7)
  			{
  				return 7 - mbuf_len;
-@@ -5114,6 +5182,7 @@
+@@ -5112,6 +5180,7 @@
  	{
  		case DVBAPI_FILTER_DATA:
  		{
@@ -1583,7 +1583,7 @@ Index: module-dvbapi.c
  			if(data_len < 1)
  			{
  				cs_log("Error: packet DVBAPI_FILTER_DATA is too short!");
-@@ -5140,6 +5209,7 @@
+@@ -5138,6 +5207,7 @@
  		}
  		case DVBAPI_CLIENT_INFO:
  		{
@@ -1591,7 +1591,7 @@ Index: module-dvbapi.c
  			uint16_t client_proto = b2i(2, mbuf + 4);
  
  			NULLFREE(last_client_name);
-@@ -5263,7 +5333,11 @@
+@@ -5261,7 +5331,11 @@
  	int32_t maxpfdsize = (MAX_DEMUX * maxfilter) + MAX_DEMUX + 2;
  	struct pollfd pfd2[maxpfdsize];
  	struct timeb start, end;  // start time poll, end time poll
@@ -1603,7 +1603,7 @@ Index: module-dvbapi.c
  	struct sockaddr_un saddr;
  	saddr.sun_family = AF_UNIX;
  	strncpy(saddr.sun_path, PMT_SERVER_SOCKET, 107);
-@@ -5449,7 +5523,7 @@
+@@ -5447,7 +5521,7 @@
  			{
  				if(demux[i].demux_fd[g].fd <= 0) continue; // deny obvious invalid fd!
  
@@ -1612,7 +1612,7 @@ Index: module-dvbapi.c
  				{
  					pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
  					pfd2[pfdcount].events = (POLLIN | POLLPRI);
-@@ -5480,11 +5554,12 @@
+@@ -5478,11 +5552,12 @@
  			{
  				gone = comp_timeb(&now, &demux[i].emmstart);
  
@@ -1627,7 +1627,7 @@ Index: module-dvbapi.c
  					}
  				}
  
-@@ -5508,7 +5583,7 @@
+@@ -5506,7 +5581,7 @@
  				else
  				{
  					gone = comp_timeb(&now, &demux[i].emmstart);
@@ -1636,7 +1636,7 @@ Index: module-dvbapi.c
  					{
  						demux[i].emmstart = now;
  						dvbapi_start_emm_filter(i); // start emmfiltering delayed if filters already were running
-@@ -5799,8 +5874,16 @@
+@@ -5797,8 +5872,16 @@
  							close(connfd);
  							connfd = -1;
  
@@ -1654,7 +1654,7 @@ Index: module-dvbapi.c
  								if (cfg.dvbapi_listenport)
  								{
  									//update webif data
-@@ -5890,6 +5973,13 @@
+@@ -5888,6 +5971,13 @@
  	memset(&ca_descr, 0, sizeof(ca_descr));
  	memset(&ca_descr_mode, 0, sizeof(ca_descr_mode_t));
  
@@ -1668,7 +1668,7 @@ Index: module-dvbapi.c
  	if(memcmp(demux[demux_id].lastcw[0], nullcw, 8) == 0
  			&& memcmp(demux[demux_id].lastcw[1], nullcw, 8) == 0)
  		{ cwEmpty = 1; } // to make sure that both cws get written on constantcw
-@@ -5907,6 +5997,7 @@
+@@ -5905,6 +5995,7 @@
  			&& (memcmp(cw + (n * 8), nullcw, 8) != 0 || demux[demux_id].ECMpids[pid].CAID == 0x2600))
  		{
  			ca_index_t idx = dvbapi_ca_setpid(demux_id, pid, stream_id, (algo == CA_ALGO_DES), msgid);  // prepare ca
@@ -1676,7 +1676,7 @@ Index: module-dvbapi.c
  			if (idx == INDEX_INVALID) return; // return on no index!
  
  #if defined WITH_COOLAPI || defined WITH_COOLAPI2
-@@ -5954,6 +6045,11 @@
+@@ -5952,6 +6043,11 @@
  							}
  						}
  					}
@@ -1688,7 +1688,55 @@ Index: module-dvbapi.c
  					if(!write_cw) { continue; } // no need to write the cw since this ca isnt using it!
  
  					lastidx = usedidx;
-@@ -6026,6 +6122,11 @@
+@@ -5968,8 +6064,22 @@
+ 						ca_descr_mode.algo = algo;
+ 						ca_descr_mode.cipher_mode = cipher_mode;
+ 
+-						if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
++						if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_boxtype == BOXTYPE_HISILICON)
++						{
++							if(cfg.dvbapi_boxtype == BOXTYPE_HISILICON)
++							{ 
++								if(ca_fd[i] <= 0)
++								{
++									ca_fd[i] = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
++									if(ca_fd[i] <= 0) { continue; }
++								}
++								if (dvbapi_ioctl(ca_fd[i], CA_SET_DESCR_MODE, &ca_descr_mode) < 0)
++								{
++									cs_log("ERROR: ioctl(CA_SET_DESCR_MODE): %s", strerror(errno));
++								}
++							}
+ 							dvbapi_net_send(DVBAPI_CA_SET_DESCR_MODE, demux[demux_id].socket_fd, msgid, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr_mode, NULL, NULL, demux[demux_id].client_proto_version);
++						}
+ 						else
+ 						{
+ 							if(ca_fd[i] <= 0)
+@@ -5984,8 +6094,22 @@
+ 						}
+ 					}
+ 
+-					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
++					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_boxtype == BOXTYPE_HISILICON)
++					{
++							if(cfg.dvbapi_boxtype == BOXTYPE_HISILICON)
++							{
++								if(ca_fd[i] <= 0)
++								{
++									ca_fd[i] = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
++									if(ca_fd[i] <= 0) { continue; }
++								}
++								if (dvbapi_ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr) < 0)
++								{
++									cs_log("ERROR: ioctl(CA_SET_DESCR): %s", strerror(errno));
++								}
++							}
+ 						dvbapi_net_send(DVBAPI_CA_SET_DESCR, demux[demux_id].socket_fd, msgid, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr, NULL, NULL, demux[demux_id].client_proto_version);
++					}
+ 					else
+ 					{
+ 						if(ca_fd[i] <= 0)
+@@ -6024,6 +6148,11 @@
  {
  	int32_t i, j, k, handled = 0;
  
@@ -1700,7 +1748,7 @@ Index: module-dvbapi.c
  	for(i = 0; i < MAX_DEMUX; i++)
  	{
  		uint32_t nocw_write = 0; // 0 = write cw, 1 = dont write cw to hardware demuxer
-@@ -6637,6 +6738,11 @@
+@@ -6635,6 +6764,11 @@
  		return 0;
  	}
  
@@ -1712,7 +1760,7 @@ Index: module-dvbapi.c
  	if(selected_api != DVBAPI_3 && selected_api != DVBAPI_1 && selected_api != STAPI)   // only valid for dvbapi3, dvbapi1 and STAPI
  	{
  		return 0;
-@@ -6840,7 +6946,10 @@
+@@ -6838,7 +6972,10 @@
  		break;
  	}
  	#endif
@@ -1726,7 +1774,7 @@ Index: module-dvbapi.c
  	}
 Index: module-dvbapi.h
 ===================================================================
---- module-dvbapi.h	(revision 1587)
+--- module-dvbapi.h	(revision 1604)
 +++ module-dvbapi.h	(working copy)
 @@ -10,11 +10,15 @@
  #define TYPE_PAT 4
@@ -1782,7 +1830,7 @@ Index: module-dvbapi.h
  // we store the results of remove_streampid_from_list()
 Index: oscam-config-global.c
 ===================================================================
---- oscam-config-global.c	(revision 1587)
+--- oscam-config-global.c	(revision 1604)
 +++ oscam-config-global.c	(working copy)
 @@ -1277,7 +1277,11 @@
  	DEF_OPT_SAVE_FUNC(dvbapi_should_save_fn),
@@ -1798,7 +1846,7 @@ Index: oscam-config-global.c
  	DEF_OPT_INT32("delayer"		, OFS(dvbapi_delayer),		0),
 Index: oscam-ecm.c
 ===================================================================
---- oscam-ecm.c	(revision 1587)
+--- oscam-ecm.c	(revision 1604)
 +++ oscam-ecm.c	(working copy)
 @@ -1531,7 +1531,13 @@
  
@@ -1853,7 +1901,7 @@ Index: oscam-ecm.c
  		return 0;
 Index: oscam-files.c
 ===================================================================
---- oscam-files.c	(revision 1587)
+--- oscam-files.c	(revision 1604)
 +++ oscam-files.c	(working copy)
 @@ -31,8 +31,12 @@
  		{ strcat(cs_tmpdir, "/"); }
@@ -1870,7 +1918,7 @@ Index: oscam-files.c
  }
 Index: oscam.c
 ===================================================================
---- oscam.c	(revision 1587)
+--- oscam.c	(revision 1604)
 +++ oscam.c	(working copy)
 @@ -15,6 +15,9 @@
  #include "module-dvbapi-azbox.h"
